@@ -1,7 +1,5 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
-const jwt = require("jsonwebtoken");
-const bcrypt = require("bcrypt");
 
 const studentSchema = new mongoose.Schema(
   {
@@ -18,7 +16,8 @@ const studentSchema = new mongoose.Schema(
       unique: true,
       trim: true,
       validate(value) {
-        if (!/^[0-9]{2}[a-zA-Z]{3}[0-9]{3}$/.test(value)) {
+        const regex = /^[0-9]{2}[a-zA-Z]{3}[0-9]{3}$/;
+        if (!(regex.test(value))) {
           throw new Error(
             "Invalid roll number please enter a valid roll number."
           );
@@ -32,7 +31,8 @@ const studentSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
       validate(value) {
-        if (!/^.+@lnmiit\.ac\.in$/.test(value)) {
+        const regex = /^[0-9]{2}[A-Za-z]{3}[0-9]{3}@lnmiit\.ac\.in$/;
+        if (!(regex.test(value))) {
           throw new Error("Please Enter a valid LNMIIT email address.");
         }
       },
@@ -57,24 +57,5 @@ const studentSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-
-studentSchema.methods.getJWT = async function () {
-  const user = this;
-  const token = await jwt.sign(
-    { _id: user._id, role: user.role },
-    process.env.JWT_SECRET,
-    {
-      expiresIn: "1d",
-    }
-  );
-  return token;
-};
-
-studentSchema.methods.validatePassword = async function(passwordEnteredByUser) {
-    const user = this;
-    const passwordHash = user.password;
-    const isPasswordValid = await bcrypt.compare(passwordEnteredByUser, passwordHash);
-    return isPasswordValid;
-}
 
 module.exports = mongoose.model("Student", studentSchema);
