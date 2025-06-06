@@ -5,9 +5,9 @@ const cookieParser = require("cookie-parser");
 app.use(cookieParser());
 app.use(express.json());
 require("dotenv").config();
+const authRouter = require("./routes/auth");
 
-
-
+app.use("/", authRouter);
 
 connectDB()
   .then(() => {
