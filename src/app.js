@@ -5,9 +5,11 @@ const cookieParser = require("cookie-parser");
 app.use(cookieParser());
 app.use(express.json());
 require("dotenv").config();
+const authRouter = require("./routes/auth");
+const superAdminRouter = require("./routes/superAdmin");
 
-
-
+app.use("/", authRouter);
+app.use("/", superAdminRouter);
 
 connectDB()
   .then(() => {
