@@ -7,6 +7,7 @@ const complaintSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Student",
       required: true,
+      index: true
     },
     title: {
       type: String,
@@ -25,6 +26,7 @@ const complaintSchema = new mongoose.Schema(
     tags: {
       type: [String],
       required: true,
+      index: true
     },
     status: {
       type: String,
