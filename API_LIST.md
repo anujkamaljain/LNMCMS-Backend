@@ -7,6 +7,13 @@ SUPER ADMIN
 - /superadmin/students (PATCH)
 - /superadmin/admins (PATCH)
 - /superadmin/superadmins (PATCH)
+- /superadmin/students (GET)
+- /superadmin/admins (GET)
+- /superadmin/superadmins (GET)
+- /superadmin/students (DELETE)
+- /superadmin/admins (DELETE)
+- /superadmin/superadmins (DELETE)
+- /superadmin/student (DELETE)
 
 ADMIN
 - /admin/complaints (GET)
