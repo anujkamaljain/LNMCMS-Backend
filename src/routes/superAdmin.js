@@ -290,5 +290,33 @@ superAdminRouter.delete(
   }
 );
 
+// DELETE Student by Roll Number
+superAdminRouter.delete(
+  "/superadmin/student/:rollNumber",
+  userAuth,
+  isSuperAdmin,
+  async (req, res) => {
+    try {
+      const { rollNumber } = req.params;
+
+      if (!rollNumber) {
+        return res.status(400).json({ message: "Roll number is required" });
+      }
+
+      const deletedStudent = await Student.findOneAndDelete({ rollNumber });
+
+      if (!deletedStudent) {
+        return res.status(404).json({ message: "Student not found" });
+      }
+
+      res.status(200).json({
+        message: "Student deleted successfully",
+        data: deletedStudent,
+      });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }
+);
 
 module.exports = superAdminRouter;
