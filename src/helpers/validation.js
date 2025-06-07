@@ -11,10 +11,10 @@ const validateLoginData = (req) => {
   }
 };
 
-const validateNewPassword = (newPassword) => {
-  if (!validator.isStrongPassword(newPassword)) {
+const validatePassword = (Password) => {
+  if (!validator.isStrongPassword(Password)) {
     throw new Error("Please Enter a strong new password.");
   }
 };
 
-module.exports = { validateLoginData, validateNewPassword };
+module.exports = { validateLoginData, validatePassword };

@@ -11,6 +11,7 @@ const csv = require("csv-parser");
 const fs = require("fs");
 const generatePassword = require("../utils/generatePassword");
 const sendMail = require("../utils/sendMail");
+const { validatePassword } = require("../helpers/validation");
 
 // API for creating a super admin
 superAdminRouter.post(
@@ -29,7 +30,7 @@ superAdminRouter.post(
       if (existingSuperAdmin) {
         return res.status(400).json({ message: "Super Admin already exists" });
       }
-
+      validatePassword(password);
       const passwordHash = await bcrypt.hash(password, 10);
       const newSuperAdmin = new SuperAdmin({
         name: name,
@@ -66,6 +67,7 @@ superAdminRouter.post(
       if (existingAdmin) {
         return res.status(400).json({ message: "Admin already exists" });
       }
+      validatePassword(password);
       const passwordHash = await bcrypt.hash(password, 10);
       const newAdmin = new Admin({
         name: name,
@@ -102,6 +104,7 @@ superAdminRouter.post(
       if (existingStudent) {
         return res.status(400).json({ message: "Student already exists" });
       }
+      validatePassword(password);
       const passwordHash = await bcrypt.hash(password, 10);
       const newStudent = new Student({
         name: name,
@@ -193,7 +196,7 @@ superAdminRouter.post(
             if (err) console.error("Error deleting file:", err);
           });
 
-            res.status(201).json({
+          res.status(201).json({
             message: "Students are being registered and emails are being sent.",
           });
         });
