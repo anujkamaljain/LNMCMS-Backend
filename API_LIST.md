@@ -1,6 +1,7 @@
 SUPER ADMIN 
 
 - /superadmin/students (POST)
+- /superadmin/student (POST)
 - /superadmin/admins (POST)
 - /superadmin/superadmins (POST) 
 - /superadmin/students (PATCH)

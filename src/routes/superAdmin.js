@@ -158,7 +158,8 @@ superAdminRouter.post(
             const existingUser = await Student.findOne({ email });
             if (existingUser) continue;
 
-            const randpassword = generatePassword();
+            const randpassword = generatePassword(8);
+            validatePassword(randpassword);
             const passwordHash = await bcrypt.hash(randpassword, 10);
 
             const student = new Student({
@@ -176,7 +177,7 @@ superAdminRouter.post(
                 sendMail({
                   to: email,
                   subject: "Welcome to Complaint Portal",
-                  text: `Your student account is created.\nEmail: ${email}\nPassword: ${randpassword}. \nPlease change your password after logging in.`,
+                  text: `Hi ${name}, \nYour student account is created.\nEmail: ${email}\nPassword: ${randpassword} \nPlease change your password after logging in. \nThank you!`,
                 }).catch((err) => {
                   console.error("Email error:", email, err.message);
                 })
@@ -189,7 +190,7 @@ superAdminRouter.post(
           }
 
           Promise.allSettled(operations).then(() => {
-            console.log("All operations settled (DB + Email)");
+            console.log("Work Done: All students are created and emails sent.");
           });
 
           fs.unlink(req.file.path, (err) => {
