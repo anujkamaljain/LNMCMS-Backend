@@ -237,4 +237,58 @@ superAdminRouter.delete(
   }
 );
 
+// API for bulk deleting students from a CSV file using DELETE method
+superAdminRouter.delete(
+  "/superadmin/students",
+  userAuth,
+  isSuperAdmin,
+  upload.single("file"),
+  async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const results = [];
+      fs.createReadStream(req.file.path)
+        .pipe(csv())
+        .on("data", (data) => results.push(data))
+        .on("end", async () => {
+          const operations = [];
+
+          for (const row of results) {
+            const { rollNumber } = row;
+
+            if (!rollNumber?.trim()) continue;
+
+            const op = Student.deleteOne({ rollNumber: rollNumber.trim() })
+              .then((res) => {
+                if (res.deletedCount === 0) {
+                  console.warn(`No student found for rollNumber: ${rollNumber}`);
+                }
+              })
+              .catch((err) => {
+                console.error(`Error deleting student with rollNumber ${rollNumber}:`, err.message);
+              });
+
+            operations.push(op);
+          }
+
+          await Promise.allSettled(operations);
+
+          fs.unlink(req.file.path, (err) => {
+            if (err) console.error("Error deleting file:", err);
+          });
+
+          res.status(200).json({
+            message: "Deletion process initiated for all matching students.",
+          });
+        });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }
+);
+
+
 module.exports = superAdminRouter;
