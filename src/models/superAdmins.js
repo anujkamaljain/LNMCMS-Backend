@@ -44,4 +44,11 @@ const superAdminSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+superAdminSchema.pre("save", async function (next) {
+  if (this.isModified("email")) {
+    this.email = this.email.toLowerCase();
+  }
+  next();
+});
+
 module.exports = mongoose.model("SuperAdmin", superAdminSchema);

@@ -47,4 +47,11 @@ const adminSchema = new mongoose.Schema(
     }, {timestamps: true}
 );
 
+adminSchema.pre("save", async function (next) {
+    if (this.isModified("email")) {
+        this.email = this.email.toLowerCase();
+    }
+    next();
+});
+
 module.exports = mongoose.model("Admin", adminSchema);

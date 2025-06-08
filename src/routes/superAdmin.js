@@ -11,11 +11,11 @@ const csv = require("csv-parser");
 const fs = require("fs");
 const generatePassword = require("../utils/generatePassword");
 const sendMail = require("../utils/sendMail");
-const { validatePassword } = require("../helpers/validation");
+const { validatePassword, ValidateEditData } = require("../helpers/validation");
 
-// API for creating a super admin
+// POST API for creating a single super admin
 superAdminRouter.post(
-  "/superadmin/superadmins",
+  "/superadmin/superadmin",
   userAuth,
   isSuperAdmin,
   async (req, res) => {
@@ -50,9 +50,9 @@ superAdminRouter.post(
   }
 );
 
-// API for creating a single admin
+// POST API for creating a single admin
 superAdminRouter.post(
-  "/superadmin/admins",
+  "/superadmin/admin",
   userAuth,
   isSuperAdmin,
   async (req, res) => {
@@ -87,7 +87,7 @@ superAdminRouter.post(
   }
 );
 
-// API for creating a single student
+// POST API for creating a single student
 superAdminRouter.post(
   "/superadmin/student",
   userAuth,
@@ -104,6 +104,7 @@ superAdminRouter.post(
       if (existingStudent) {
         return res.status(400).json({ message: "Student already exists" });
       }
+      rollNumber = rollNumber.toUpperCase();
       validatePassword(password);
       const passwordHash = await bcrypt.hash(password, 10);
       const newStudent = new Student({
@@ -129,9 +130,9 @@ superAdminRouter.post(
   }
 );
 
-// DELETE your own super admin account
+// DELETE API to delete your own super admin account
 superAdminRouter.delete(
-  "/superadmin/superadmins",
+  "/superadmin/superadmin",
   userAuth,
   isSuperAdmin,
   async (req, res) => {
@@ -156,9 +157,9 @@ superAdminRouter.delete(
   }
 );
 
-// DELETE admin by email (email passed as URL param)
+// DELETE API to delete admin by email (email passed as URL param)
 superAdminRouter.delete(
-  "/superadmin/admins/:email",
+  "/superadmin/admin/:email",
   userAuth,
   isSuperAdmin,
   async (req, res) => {
@@ -187,7 +188,7 @@ superAdminRouter.delete(
   }
 );
 
-// DELETE Student by Roll Number
+// DELETE API to delete Student by Roll Number
 superAdminRouter.delete(
   "/superadmin/student/:rollNumber",
   userAuth,
@@ -199,6 +200,8 @@ superAdminRouter.delete(
       if (!rollNumber) {
         return res.status(400).json({ message: "Roll number is required" });
       }
+
+      rollNumber = rollNumber.toUpperCase();
 
       const deletedStudent = await Student.findOneAndDelete({ rollNumber });
 
@@ -216,9 +219,180 @@ superAdminRouter.delete(
   }
 );
 
+// GET API to fetch student by Roll Number
+superAdminRouter.get(
+  "/superadmin/student/:rollNumber",
+  userAuth,
+  isSuperAdmin,
+  async (req, res) => {
+    try {
+      const { rollNumber } = req.params;
+      if (!rollNumber) {
+        return res.status(400).json({ message: "Roll number is required" });
+      }
+      rollNumber = rollNumber.toUpperCase();
+      const student = await Student.findOne({ rollNumber: rollNumber });
+      if (!student) {
+        return res.status(404).json({
+          message: `Student not found with roll number ${rollNumber}`,
+        });
+      }
+      res.status(200).json({
+        message: "Student found",
+        data: student,
+      });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }
+);
+
+// GET API to fetch admin by email
+superAdminRouter.get(
+  "/superadmin/admin/:email",
+  userAuth,
+  isSuperAdmin,
+  async (req, res) => {
+    try {
+      const { email } = req.params;
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+      email = email.toLowerCase();
+      const admin = await Admin.findOne({ email: email });
+      if (!admin) {
+        return res
+          .status(404)
+          .json({ message: `Admin not found with email ${email}` });
+      }
+      res.status(200).json({
+        message: "Admin found",
+        data: admin,
+      });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }
+);
+
+// PATCH API to update super admin own details
+superAdminRouter.patch(
+  "/superadmin/superadmin",
+  userAuth,
+  isSuperAdmin,
+  async (req, res) => {
+    try {
+      ValidateEditData(req);
+      const superAdmin = req.user;
+      Object.keys(req.body).forEach((key) => {
+        superAdmin[key] = req.body[key];
+      });
+      await superAdmin.save();
+      res.status(200).json({
+        message: "Super Admin details updated successfully",
+        data: superAdmin,
+      });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }
+);
+
+// PATCH API to update super admin password
+superAdminRouter.patch(
+  "/superadmin/changepassword",
+  userAuth,
+  isSuperAdmin,
+  async (req, res) => {
+    try {
+      const { confirmPassword, oldPassword, newPassword } = req.body;
+      if (confirmPassword !== newPassword) {
+        return res.status(400).json({
+          message: "New password and confirm password do not match",
+        });
+      }
+      if (!oldPassword || !newPassword || !confirmPassword) {
+        return res.status(400).json({
+          message:
+            "Old password , confirm password and new password are required",
+        });
+      }
+      validatePassword(newPassword);
+      const superAdmin = req.user;
+      const isMatch = await bcrypt.compare(oldPassword, superAdmin.password);
+      if (!isMatch) {
+        return res.status(400).json({ message: "Old password is incorrect" });
+      }
+      superAdmin.password = await bcrypt.hash(newPassword, 10);
+      await superAdmin.save();
+      res.json({
+        message: `${superAdmin.name} your password is updated succesfully.`,
+        data: superAdmin,
+      });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }
+);
+
+// PATCH API to update admin details
+superAdminRouter.patch(
+  "/superadmin/admin",
+  userAuth,
+  isSuperAdmin,
+  async (req, res) => {
+    try {
+      ValidateEditData(req);
+      const admin = await Admin.findById({ _id: req.body._id });
+      if (!admin) {
+        return res.status(404).json({ message: "Admin not found" });
+      }
+      req.body.email = req.body.email.toLowerCase();
+      Object.keys(req.body).forEach((key) => {
+        admin[key] = req.body[key];
+      });
+      await admin.save();
+      res.status(200).json({
+        message: "admin details updated successfully",
+        data: admin,
+      });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }
+);
+
+// PATCH API to update student details
+superAdminRouter.patch(
+  "/superadmin/student",
+  userAuth,
+  isSuperAdmin,
+  async (req, res) => {
+    try {
+      ValidateEditData(req);
+      const student = await Student.findById({ _id: req.body._id });
+      if (!student) {
+        return res.status(404).json({ message: "Student not found" });
+      }
+      req.body.email = req.body.email.toLowerCase();
+      req.body.rollNumber = req.body.rollNumber.toUpperCase();
+      Object.keys(req.body).forEach((key) => {
+        student[key] = req.body[key];
+      });
+      await student.save();
+      res.status(200).json({
+        message: "student details updated successfully",
+        data: student,
+      });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }
+);
+
 //temporary storing uploaded file
 const upload = multer({ dest: "uploads/" });
-//API for bulk uploading students from a CSV file
+// POST API for bulk uploading students from a CSV file
 superAdminRouter.post(
   "/superadmin/students",
   userAuth,
@@ -244,7 +418,7 @@ superAdminRouter.post(
 
             const existingUser = await Student.findOne({ email });
             if (existingUser) continue;
-
+            rollNumber = rollNumber.toUpperCase();
             const randpassword = generatePassword(8);
             validatePassword(randpassword);
             const passwordHash = await bcrypt.hash(randpassword, 10);
@@ -295,7 +469,7 @@ superAdminRouter.post(
   }
 );
 
-// API for bulk deleting students from a CSV file using DELETE method
+// DELETE API for bulk deleting students from a CSV file using DELETE method
 superAdminRouter.delete(
   "/superadmin/students",
   userAuth,
@@ -318,7 +492,7 @@ superAdminRouter.delete(
             const { rollNumber } = row;
 
             if (!rollNumber?.trim()) continue;
-
+            rollNumber = rollNumber.toUpperCase();
             const op = Student.deleteOne({ rollNumber: rollNumber.trim() })
               .then((res) => {
                 if (res.deletedCount === 0) {

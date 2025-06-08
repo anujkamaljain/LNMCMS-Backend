@@ -58,4 +58,14 @@ const studentSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+studentSchema.pre("save", async function (next) {
+  if(this.isModified("rollNumber")){
+    this.rollNumber = this.rollNumber.toUpperCase();
+  }
+  if(this.isModified("email")){
+    this.email = this.email.toLowerCase();
+  }
+  next();
+});
+
 module.exports = mongoose.model("Student", studentSchema);
