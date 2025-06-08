@@ -13,7 +13,7 @@ SUPER ADMIN
 - /superadmin/student (PATCH)
 - /superadmin/admin (PATCH)
 - /superadmin/superadmin (PATCH)
-- /superadmin/changepassword
+- /superadmin/changepassword (PATCH)
 
 ADMIN
 - /admin/complaints (GET)
