@@ -129,6 +129,93 @@ superAdminRouter.post(
   }
 );
 
+// DELETE your own super admin account
+superAdminRouter.delete(
+  "/superadmin/superadmins",
+  userAuth,
+  isSuperAdmin,
+  async (req, res) => {
+    try {
+      const { email } = req.user;
+      if (!email) {
+        return res
+          .status(400)
+          .json({ message: "Email is required. Please Loin" });
+      }
+      const deletedCount = await SuperAdmin.deleteOne({ email: email });
+      if (deletedCount.deletedCount === 0) {
+        return res.status(404).json({ message: "Unable to delete account." });
+      }
+      res.clearCookie("token");
+      res.status(200).json({
+        message: "Your account deleted successfully.",
+      });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }
+);
+
+// DELETE admin by email (email passed as URL param)
+superAdminRouter.delete(
+  "/superadmin/admins/:email",
+  userAuth,
+  isSuperAdmin,
+  async (req, res) => {
+    try {
+      const email = req.params.email;
+
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+
+      const deletedAdmin = await Admin.findOneAndDelete({ email });
+
+      if (!deletedAdmin) {
+        return res
+          .status(404)
+          .json({ message: "Admin not found with that email" });
+      }
+
+      res.status(200).json({
+        message: "Admin deleted successfully",
+        data: deletedAdmin,
+      });
+    } catch (err) {
+      res.status(500).json({ message: "Server error", error: err.message });
+    }
+  }
+);
+
+// DELETE Student by Roll Number
+superAdminRouter.delete(
+  "/superadmin/student/:rollNumber",
+  userAuth,
+  isSuperAdmin,
+  async (req, res) => {
+    try {
+      const { rollNumber } = req.params;
+
+      if (!rollNumber) {
+        return res.status(400).json({ message: "Roll number is required" });
+      }
+
+      const deletedStudent = await Student.findOneAndDelete({ rollNumber });
+
+      if (!deletedStudent) {
+        return res.status(404).json({ message: "Student not found" });
+      }
+
+      res.status(200).json({
+        message: "Student deleted successfully",
+        data: deletedStudent,
+      });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }
+);
+
 //temporary storing uploaded file
 const upload = multer({ dest: "uploads/" });
 //API for bulk uploading students from a CSV file
@@ -208,35 +295,6 @@ superAdminRouter.post(
   }
 );
 
-// DELETE admin by email (email passed as URL param)
-superAdminRouter.delete(
-  "/superadmin/admins/:email",
-  userAuth,
-  isSuperAdmin,
-  async (req, res) => {
-    try {
-      const email = req.params.email;
-
-      if (!email) {
-        return res.status(400).json({ message: "Email is required" });
-      }
-
-      const deletedAdmin = await Admin.findOneAndDelete({ email });
-
-      if (!deletedAdmin) {
-        return res.status(404).json({ message: "Admin not found with that email" });
-      }
-
-      res.status(200).json({
-        message: "Admin deleted successfully",
-        data: deletedAdmin,
-      });
-    } catch (err) {
-      res.status(500).json({ message: "Server error", error: err.message });
-    }
-  }
-);
-
 // API for bulk deleting students from a CSV file using DELETE method
 superAdminRouter.delete(
   "/superadmin/students",
@@ -264,11 +322,16 @@ superAdminRouter.delete(
             const op = Student.deleteOne({ rollNumber: rollNumber.trim() })
               .then((res) => {
                 if (res.deletedCount === 0) {
-                  console.warn(`No student found for rollNumber: ${rollNumber}`);
+                  console.warn(
+                    `No student found for rollNumber: ${rollNumber}`
+                  );
                 }
               })
               .catch((err) => {
-                console.error(`Error deleting student with rollNumber ${rollNumber}:`, err.message);
+                console.error(
+                  `Error deleting student with rollNumber ${rollNumber}:`,
+                  err.message
+                );
               });
 
             operations.push(op);
@@ -284,35 +347,6 @@ superAdminRouter.delete(
             message: "Deletion process initiated for all matching students.",
           });
         });
-    } catch (err) {
-      res.status(500).json({ message: err.message });
-    }
-  }
-);
-
-// DELETE Student by Roll Number
-superAdminRouter.delete(
-  "/superadmin/student/:rollNumber",
-  userAuth,
-  isSuperAdmin,
-  async (req, res) => {
-    try {
-      const { rollNumber } = req.params;
-
-      if (!rollNumber) {
-        return res.status(400).json({ message: "Roll number is required" });
-      }
-
-      const deletedStudent = await Student.findOneAndDelete({ rollNumber });
-
-      if (!deletedStudent) {
-        return res.status(404).json({ message: "Student not found" });
-      }
-
-      res.status(200).json({
-        message: "Student deleted successfully",
-        data: deletedStudent,
-      });
     } catch (err) {
       res.status(500).json({ message: err.message });
     }
