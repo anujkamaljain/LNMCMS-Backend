@@ -4,6 +4,8 @@ const userAuth = require("../middlewares/userAuth");
 const Student = require("../models/students");
 const Complaint = require("../models/complaints");
 const isStudent = require("../middlewares/isStudent");
+const {validatePassword} = require("../helpers/validation");
+const bcrypt = require("bcrypt");
 
 // POST /student/complaint — Register a complaint
 studentRouter.post(
@@ -83,6 +85,107 @@ studentRouter.get(
       });
     } catch (err) {
       res.status(500).json({ message: "Server error: " + err.message });
+    }
+  }
+);
+
+// PATCH /student/changepassword — Update student password
+studentRouter.patch("/student/changepassword", userAuth, isStudent, async (req, res) => {
+  try {
+    const { oldPassword, newPassword, confirmPassword } = req.body;
+
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      return res.status(400).json({
+        message: "Old password, new password, and confirm password are required",
+      });
+    }
+
+    const student = req.user;
+
+    // Step 1: Check if old password is correct
+    const isMatch = await bcrypt.compare(oldPassword, student.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Old password is incorrect" });
+    }
+
+    // Step 2: Ensure new and confirm passwords match
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        message: "New password and confirm password do not match",
+      });
+    }
+
+    // Step 3: Check if new password is different from old password
+    if (oldPassword === newPassword) {
+      return res.status(400).json({
+        message: "New password cannot be the same as the old password",
+      });
+    }
+
+    // Step 4: Validate new password strength
+    validatePassword(newPassword); // throws error if weak
+
+    // Step 5: Save new password
+    student.password = await bcrypt.hash(newPassword, 10);
+    await student.save();
+
+    res.status(200).json({
+      message: `${student.name}, your password has been successfully updated.`,
+    });
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// API for resolving a complaint
+studentRouter.patch(
+  "/student/complaint/resolve/:id",
+  userAuth,
+  isStudent,
+  async (req, res) => {
+    try {
+      const _id = req.params.id;
+
+      if (!_id) {
+        return res.status(400).json({ message: "Complaint ID is required." });
+      }
+
+      // Fetch the complaint and populate necessary fields
+      const complaint = await Complaint.findOne({ _id }).populate("acceptedBy", "name email");
+
+      if (!complaint) {
+        return res.status(404).json({ message: "Complaint not found." });
+      }
+
+      // Check if complaint belongs to the logged-in student
+      if (complaint.studentId.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ message: "You are not authorized to resolve this complaint." });
+      }
+
+      // Status checks
+      if (complaint.status === "pending") {
+        return res.status(400).json({ message: "Complaint is still pending and cannot be marked as resolved." });
+      }
+
+      if (complaint.status === "resolved") {
+        return res.status(400).json({ message: "Complaint is already resolved." });
+      }
+
+      // Update the status
+      complaint.status = "resolved";
+      await complaint.save();
+
+      const populatedComplaint = await Complaint.findById(_id)
+        .populate("acceptedBy", "name email")
+        .populate("studentId", "rollNumber");
+
+      res.status(200).json({
+        message: "Complaint marked as resolved.",
+        data: populatedComplaint,
+      });
+    } catch (err) {
+      res.status(500).json({ message: "Complaint ID is Incorrrect" });
     }
   }
 );
