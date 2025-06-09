@@ -3,8 +3,8 @@ const adminRouter = express.Router();
 const userAuth = require("../middlewares/userAuth");
 const isAdmin = require("../middlewares/isAdmin");
 const Complaint = require("../models/complaints");
-const Admin = require("../models/admins");
-const { validatePassword, ValidateEditData } = require("../helpers/validation");
+const { validatePassword } = require("../helpers/validation");
+const bcrypt = require("bcrypt");
 
 // API for getting pending complaints of your department
 adminRouter.get(
@@ -92,7 +92,7 @@ adminRouter.patch(
             message: "Complaint ID is required."
         });
     }
-    const complaint = await Complaint.findOne({_id: _id, status: "pending"});
+    const complaint = await Complaint.findOne({_id: _id}).populate("acceptedBy", "name email");
     if (!complaint) {
       return res.status(404).json({
         message: "Complaint not found.",
@@ -103,9 +103,14 @@ adminRouter.patch(
             message: "You cannot accept this complaint as it does not belong to your department.",
         });
     }
-    if (complaint.status !== "pending") {
+    if (complaint.status === "accepted") {
       return res.status(400).json({
-        message: "Complaint is not in pending status.",
+        message: `Complaint is already accepted by ${complaint.acceptedBy.name}.`,
+      });
+    }
+    if (complaint.status === "resolved") {
+      return res.status(400).json({
+        message: `Complaint is already resolved by ${complaint.acceptedBy.name}.`,
       });
     }
     complaint.status = "accepted";
@@ -116,6 +121,48 @@ adminRouter.patch(
       message: "Complaint accepted successfully.",
       data: populatedComplaint,
     });
+  }
+);
+
+// PATCH API to update admin password
+adminRouter.patch(
+  "/admin/changepassword",
+  userAuth,
+  isAdmin,
+  async (req, res) => {
+    try {
+      const { confirmPassword, oldPassword, newPassword } = req.body;
+      if (!oldPassword || !newPassword || !confirmPassword) {
+        return res.status(400).json({
+          message:
+            "Old password , confirm password and new password are required",
+        });
+      }
+      if (confirmPassword !== newPassword) {
+        return res.status(400).json({
+          message: "New password and confirm password do not match",
+        });
+      }
+      if (oldPassword === newPassword) {
+        return res.status(400).json({
+          message: "New password cannot be the same as old password",
+        });
+      }
+      validatePassword(newPassword);
+      const admin = req.user;
+      const isMatch = await bcrypt.compare(oldPassword, admin.password);
+      if (!isMatch) {
+        return res.status(400).json({ message: "Old password is incorrect" });
+      }
+      admin.password = await bcrypt.hash(newPassword, 10);
+      await admin.save();
+      res.json({
+        message: `${admin.name} your password is updated succesfully.`,
+        data: admin,
+      });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
   }
 );
 
