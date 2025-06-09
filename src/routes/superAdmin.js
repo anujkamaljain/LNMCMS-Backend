@@ -81,6 +81,11 @@ superAdminRouter.post(
         message: "Admin created successfully",
         data: newAdmin,
       });
+      await sendMail({
+        to: email,
+        subject: "Welcome to Complaint Portal",
+        text: `Your admin account is created.\n\n Your Login credentials are as follows: \n\nEmail: ${email}\nPassword: ${password}. \n\nPlease change your password after logging in.`,
+      });
     } catch (err) {
       res.status(500).json({ message: err.message });
     }
@@ -104,7 +109,6 @@ superAdminRouter.post(
       if (existingStudent) {
         return res.status(400).json({ message: "Student already exists" });
       }
-      rollNumber = rollNumber.toUpperCase();
       validatePassword(password);
       const passwordHash = await bcrypt.hash(password, 10);
       const newStudent = new Student({
@@ -122,7 +126,7 @@ superAdminRouter.post(
       await sendMail({
         to: email,
         subject: "Welcome to Complaint Portal",
-        text: `Your student account is created.\nEmail: ${email}\nPassword: ${password}. \nPlease change your password after logging in.`,
+        text: `Your student account is created.\n\n Your Login credentials are as follows: \n\nEmail: ${email}\nPassword: ${password}. \n\nPlease change your password after logging in.`,
       });
     } catch (err) {
       res.status(500).json({ message: err.message });
@@ -352,7 +356,6 @@ superAdminRouter.patch(
       if (!admin) {
         return res.status(404).json({ message: "Admin not found" });
       }
-      req.body.email = req.body.email.toLowerCase();
       Object.keys(req.body).forEach((key) => {
         admin[key] = req.body[key];
       });
@@ -360,6 +363,11 @@ superAdminRouter.patch(
       res.status(200).json({
         message: "admin details updated successfully",
         data: admin,
+      });
+      await sendMail({
+        to: admin.email,
+        subject: "Updated details of Complaint Portal",
+        text: `Your admin account details were updated by a Super Admin.\n\n Your Updated details are as follows : \n\n Email: ${admin.email}\n Department: ${admin.department}\n\n Your password is unchanged so you can use your old password to login.`,
       });
     } catch (err) {
       res.status(500).json({ message: err.message });
@@ -379,8 +387,6 @@ superAdminRouter.patch(
       if (!student) {
         return res.status(404).json({ message: "Student not found" });
       }
-      req.body.email = req.body.email.toLowerCase();
-      req.body.rollNumber = req.body.rollNumber.toUpperCase();
       Object.keys(req.body).forEach((key) => {
         student[key] = req.body[key];
       });
@@ -388,6 +394,11 @@ superAdminRouter.patch(
       res.status(200).json({
         message: "student details updated successfully",
         data: student,
+      });
+      await sendMail({
+        to: student.email,
+        subject: "Updated details of Complaint Portal",
+        text: `Your student account details were updated by a Super Admin.\n\n Your Updated details are as follows : \n\n Email: ${student.email}\n RollNumber: ${student.rollNumber}\n\n Your password is unchanged so you can use your old password to login.`,
       });
     } catch (err) {
       res.status(500).json({ message: err.message });
@@ -443,7 +454,7 @@ superAdminRouter.post(
                 sendMail({
                   to: email,
                   subject: "Welcome to Complaint Portal",
-                  text: `Hi ${name}, \nYour student account is created.\nEmail: ${email}\nPassword: ${randpassword} \nPlease change your password after logging in. \nThank you!`,
+                  text: `Your student account is created.\n\n Your Login credentials are as follows: \n\nEmail: ${email}\nPassword: ${randpassword} \n\nPlease change your password after logging in.`,
                 }).catch((err) => {
                   console.error("Email error:", email, err.message);
                 })
