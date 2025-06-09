@@ -9,6 +9,14 @@ const authRouter = require("./routes/auth");
 const superAdminRouter = require("./routes/superAdmin");
 const adminRouter = require("./routes/admin");
 const studentRouter = require("./routes/student");
+const cors = require("cors");
+
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
 
 app.use("/", authRouter);
 app.use("/", superAdminRouter);
