@@ -71,4 +71,14 @@ const complaintSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+complaintSchema.pre("save", async function (next){
+  if(this.isModified("tags")){
+    this.tags = this.tags.toUpperCase();
+  }
+  if(this.isModified("status")){
+    this.status = this.status.toLowerCase();
+  }
+  next();
+});
+
 module.exports = mongoose.model("Complaint", complaintSchema);

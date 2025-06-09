@@ -8,7 +8,7 @@ const { validatePassword, ValidateEditData } = require("../helpers/validation");
 
 adminRouter.get("/admin/complaints", userAuth, isAdmin, async (req, res) => {
   const department = req.user.department;
-  const complaints = await Complaint.find({ department: department });
+  const complaints = await Complaint.find({ tags: department });
   res.status(200).json({ message: "complaints fetched.", data: complaints });
 });
 
