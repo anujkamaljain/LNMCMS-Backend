@@ -17,7 +17,7 @@ adminRouter.get(
     const complaints = await Complaint.find({
       tags: department,
       status: "pending",
-    }).populate("studentId", "name email");
+    }).populate("studentId", "rollNumber");
     if (complaints.length == 0) {
       return res.status(200).json({
         message:
@@ -42,7 +42,7 @@ adminRouter.get(
     const complaints = await Complaint.find({
       tags: department,
       status: "accepted",
-    }).populate("studentId", "name email");
+    }).populate("studentId", "rollNumber");
     if (complaints.length == 0) {
       return res.status(200).json({
         message:
@@ -67,7 +67,7 @@ adminRouter.get(
     const complaints = await Complaint.find({
       tags: department,
       status: "resolved",
-    }).populate("studentId", "name email");
+    }).populate("studentId", "rollNumber");
     if (complaints.length == 0) {
       return res.status(200).json({
         message: "No record found!",
@@ -111,7 +111,7 @@ adminRouter.patch(
     complaint.status = "accepted";
     complaint.acceptedBy = req.user._id;
     await complaint.save();
-    const populatedComplaint = await Complaint.findById(_id).populate("acceptedBy", "name email").populate("studentId", "name email");
+    const populatedComplaint = await Complaint.findById(_id).populate("acceptedBy", "name email").populate("studentId", "rollNumber");
     res.status(200).json({
       message: "Complaint accepted successfully.",
       data: populatedComplaint,
