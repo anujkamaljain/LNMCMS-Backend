@@ -20,7 +20,7 @@ superAdminRouter.post(
   isSuperAdmin,
   async (req, res) => {
     try {
-      const { name, email, password } = req.body;
+      let { name, email, password } = req.body;
       if (!name || !email || !password) {
         return res
           .status(400)
@@ -94,7 +94,7 @@ superAdminRouter.post(
   isSuperAdmin,
   async (req, res) => {
     try {
-      const { name, email, rollNumber, password } = req.body;
+      let { name, email, rollNumber, password } = req.body;
       if (!name || !email || !password || !rollNumber) {
         return res.status(400).json({
           message: "Name, Email, Password and rollNumber are required",
@@ -195,7 +195,7 @@ superAdminRouter.delete(
   isSuperAdmin,
   async (req, res) => {
     try {
-      const { rollNumber } = req.params;
+      let { rollNumber } = req.params;
 
       if (!rollNumber) {
         return res.status(400).json({ message: "Roll number is required" });
@@ -226,7 +226,7 @@ superAdminRouter.get(
   isSuperAdmin,
   async (req, res) => {
     try {
-      const { rollNumber } = req.params;
+      let { rollNumber } = req.params;
       if (!rollNumber) {
         return res.status(400).json({ message: "Roll number is required" });
       }
@@ -254,7 +254,7 @@ superAdminRouter.get(
   isSuperAdmin,
   async (req, res) => {
     try {
-      const { email } = req.params;
+      let { email } = req.params;
       if (!email) {
         return res.status(400).json({ message: "Email is required" });
       }
@@ -412,7 +412,7 @@ superAdminRouter.post(
           const operations = [];
 
           for (const row of results) {
-            const { name, email, rollNumber } = row;
+            let { name, email, rollNumber } = row;
             if (!name?.trim() || !email?.trim() || !rollNumber?.trim())
               continue;
 
@@ -489,7 +489,7 @@ superAdminRouter.delete(
           const operations = [];
 
           for (const row of results) {
-            const { rollNumber } = row;
+            let { rollNumber } = row;
 
             if (!rollNumber?.trim()) continue;
             rollNumber = rollNumber.toUpperCase();
