@@ -16,7 +16,9 @@ SUPER ADMIN
 - /superadmin/changepassword (PATCH)
 
 ADMIN
-- /admin/complaints (GET)
+- /admin/complaints/pending (GET)
+- /admin/complaints/accepted (GET)
+- /admin/complaints/resolved (GET)
 - /admin/complaints/:id/accept (PATCH)
 - /admin/changepassword (PATCH)
 

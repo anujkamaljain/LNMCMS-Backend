@@ -51,6 +51,9 @@ adminSchema.pre("save", async function (next) {
     if (this.isModified("email")) {
         this.email = this.email.toLowerCase();
     }
+    if(this.isModified("department")){
+        this.department = this.department.toUpperCase();
+    }
     next();
 });
 
