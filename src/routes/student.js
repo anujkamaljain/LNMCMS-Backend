@@ -6,59 +6,57 @@ const Complaint = require("../models/complaints");
 const isStudent = require("../middlewares/isStudent");
 
 // POST /student/complaint — Register a complaint
-studentRouter.post("/student/complaint", userAuth, async (req, res) => {
-  try {
-    // Ensure the user is a student
-    if (req.user.role !== "student") {
-      return res
-        .status(403)
-        .json({ message: "Only students can register complaints." });
+studentRouter.post(
+  "/student/complaint",
+  userAuth,
+  isStudent,
+  async (req, res) => {
+    try {
+      const {
+        title,
+        description,
+        tags,
+        location,
+        availableTimeFrom,
+        availableTimeTo,
+        contactNumber,
+      } = req.body;
+
+      // Validate required fields
+      if (
+        !title ||
+        !description ||
+        !tags ||
+        !location ||
+        !availableTimeFrom ||
+        !availableTimeTo ||
+        !contactNumber
+      ) {
+        return res.status(400).json({ message: "All fields are required." });
+      }
+
+      const newComplaint = new Complaint({
+        studentId: req.user._id,
+        title,
+        description,
+        tags,
+        location,
+        availableTimeFrom,
+        availableTimeTo,
+        contactNumber,
+      });
+
+      await newComplaint.save();
+
+      res.status(201).json({
+        message: "Complaint registered successfully.",
+        data: newComplaint,
+      });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
     }
-
-    const {
-      title,
-      description,
-      tags,
-      location,
-      availableTimeFrom,
-      availableTimeTo,
-      contactNumber,
-    } = req.body;
-
-    // Validate required fields
-    if (
-      !title ||
-      !description ||
-      !tags ||
-      !location ||
-      !availableTimeFrom ||
-      !availableTimeTo ||
-      !contactNumber
-    ) {
-      return res.status(400).json({ message: "All fields are required." });
-    }
-
-    const newComplaint = new Complaint({
-      studentId: req.user._id,
-      title,
-      description,
-      tags,
-      location,
-      availableTimeFrom,
-      availableTimeTo,
-      contactNumber,
-    });
-
-    await newComplaint.save();
-
-    res.status(201).json({
-      message: "Complaint registered successfully.",
-      data: newComplaint,
-    });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
   }
-});
+);
 
 // GET /student/complaints — Fetch all complaints of the logged-in student
 studentRouter.get(
