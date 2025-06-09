@@ -42,7 +42,7 @@ adminRouter.get(
     const complaints = await Complaint.find({
       tags: department,
       status: "accepted",
-    }).populate("studentId", "rollNumber");
+    }).populate("acceptedBy", "name email").populate("studentId", "rollNumber");
     if (complaints.length == 0) {
       return res.status(200).json({
         message:
@@ -67,7 +67,7 @@ adminRouter.get(
     const complaints = await Complaint.find({
       tags: department,
       status: "resolved",
-    }).populate("studentId", "rollNumber");
+    }).populate("acceptedBy", "name email").populate("studentId", "rollNumber");
     if (complaints.length == 0) {
       return res.status(200).json({
         message: "No record found!",
@@ -117,6 +117,6 @@ adminRouter.patch(
       data: populatedComplaint,
     });
   }
-)
+);
 
 module.exports = adminRouter;
