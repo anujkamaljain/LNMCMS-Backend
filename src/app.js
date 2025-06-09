@@ -7,9 +7,11 @@ app.use(express.json());
 require("dotenv").config();
 const authRouter = require("./routes/auth");
 const superAdminRouter = require("./routes/superAdmin");
+const adminRouter = require("./routes/admin");
 
 app.use("/", authRouter);
 app.use("/", superAdminRouter);
+app.use("/", adminRouter);
 
 connectDB()
   .then(() => {
