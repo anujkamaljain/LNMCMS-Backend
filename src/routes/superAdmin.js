@@ -346,13 +346,14 @@ superAdminRouter.patch(
 
 // PATCH API to update admin details
 superAdminRouter.patch(
-  "/superadmin/admin",
+  "/superadmin/admin/:adminId",
   userAuth,
   isSuperAdmin,
   async (req, res) => {
     try {
       ValidateEditData(req);
-      const admin = await Admin.findById({ _id: req.body._id });
+      const _id = req.params.adminId;
+      const admin = await Admin.findById({ _id: _id });
       if (!admin) {
         return res.status(404).json({ message: "Admin not found" });
       }
@@ -377,13 +378,14 @@ superAdminRouter.patch(
 
 // PATCH API to update student details
 superAdminRouter.patch(
-  "/superadmin/student",
+  "/superadmin/student/:studentId",
   userAuth,
   isSuperAdmin,
   async (req, res) => {
     try {
       ValidateEditData(req);
-      const student = await Student.findById({ _id: req.body._id });
+      const _id = req.params.studentId;
+      const student = await Student.findById({ _id: _id });
       if (!student) {
         return res.status(404).json({ message: "Student not found" });
       }

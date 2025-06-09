@@ -1,8 +1,8 @@
 const express = require("express");
 const studentRouter = express.Router();
 const userAuth = require("../middlewares/userAuth");
-const Complaint = require("mongoose").models.Complaint || require("../models/Complaints");
 const Student = require("../models/students");
+const Complaint = require("../models/complaints");
 
 // POST /student/complaint — Register a complaint
 studentRouter.post("/student/complaint", userAuth, async (req, res) => {
