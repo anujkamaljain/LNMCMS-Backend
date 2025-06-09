@@ -72,8 +72,8 @@ const complaintSchema = new mongoose.Schema(
 );
 
 complaintSchema.pre("save", async function (next){
-  if(this.isModified("tags")){
-    this.tags = this.tags.toUpperCase();
+  if (this.isModified("tags")) {
+  this.tags = this.tags.map(tag => tag.toUpperCase());
   }
   if(this.isModified("status")){
     this.status = this.status.toLowerCase();

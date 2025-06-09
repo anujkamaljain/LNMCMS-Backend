@@ -8,10 +8,12 @@ require("dotenv").config();
 const authRouter = require("./routes/auth");
 const superAdminRouter = require("./routes/superAdmin");
 const adminRouter = require("./routes/admin");
+const studentRouter = require("./routes/student");
 
 app.use("/", authRouter);
 app.use("/", superAdminRouter);
 app.use("/", adminRouter);
+app.use("/", studentRouter);
 
 connectDB()
   .then(() => {
