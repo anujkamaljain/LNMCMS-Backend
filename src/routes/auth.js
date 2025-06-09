@@ -11,40 +11,41 @@ authRouter.post("/login", async (req, res) => {
   try {
     validateLoginData(req);
     const { email, password, role } = req.body;
+    let user;
+    let token;
     if (role === "student") {
-      const user = await Student.findOne({ email: email });
-      const token = await validateUserAndGenerateToken(user, password, role);
-      res.cookie("token", token, {
-        httpOnly: true,
-        sameSite: "Strict",
-        maxAge: 1000 * 60 * 60 * 8,
-      });
-      res.status(200).json({ message: "Login successful", data: user });
+      user = await Student.findOne({ email: email });
+      token = await validateUserAndGenerateToken(user, password);
     } else if (role === "superAdmin") {
-      const user = await SuperAdmin.findOne({ email: email });
-      const token = await validateUserAndGenerateToken(user, password, role);
-      res.cookie("token", token, {
-        httpOnly: true,
-        sameSite: "Strict",
-        maxAge: 1000 * 60 * 60 * 8,
-      });
-      res.status(200).json({ message: "Login successful", data: user });
+      user = await SuperAdmin.findOne({ email: email });
+      token = await validateUserAndGenerateToken(user, password);
     } else if (role === "admin") {
-      const user = await Admin.findOne({ email: email });
-      const token = await validateUserAndGenerateToken(user, password, role);
-      res.cookie("token", token, {
-        httpOnly: true,
-        sameSite: "Strict",
-        maxAge: 1000 * 60 * 60 * 8, //8 hours
-      });
-      res.status(200).json({ message: "Login successful", data: user });
+      user = await Admin.findOne({ email: email });
+      token = await validateUserAndGenerateToken(user, password);
     }
+    if (!token) {
+      throw new Error("Invalid credentials. Please try again.");
+    }
+    if (!user) {
+      throw new Error("User not found. Please check your credentials.");
+    }
+    if (token && user) {
+      if (user.role !== role) {
+        throw new Error("Role mismatch. Please check your credentials.");
+      }
+    }
+    res.cookie("token", token, {
+      httpOnly: true,
+      sameSite: "Strict",
+      maxAge: 1000 * 60 * 60 * 8, //8 hours
+    });
+    res.status(200).json({ message: "Login successful", data: user });
   } catch (err) {
     res.status(400).json({ message: "ERROR :" + err.message });
   }
 });
 
-authRouter.post("/logout",userAuth , async (req, res) => {
+authRouter.post("/logout", userAuth, async (req, res) => {
   res.clearCookie("token");
   res.status(200).json({ message: "Logout successful" });
 });
