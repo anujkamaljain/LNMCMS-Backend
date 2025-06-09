@@ -57,7 +57,7 @@ superAdminRouter.post(
   isSuperAdmin,
   async (req, res) => {
     try {
-      const { name, email, password, department } = req.body;
+      let { name, email, password, department } = req.body;
       if (!name || !email || !password || !department) {
         return res.status(400).json({
           message: "Name, Email, Password and Department are required",
@@ -137,7 +137,7 @@ superAdminRouter.delete(
   isSuperAdmin,
   async (req, res) => {
     try {
-      const { email } = req.user;
+      let { email } = req.user;
       if (!email) {
         return res
           .status(400)
@@ -164,7 +164,7 @@ superAdminRouter.delete(
   isSuperAdmin,
   async (req, res) => {
     try {
-      const email = req.params.email;
+      let email = req.params.email;
 
       if (!email) {
         return res.status(400).json({ message: "Email is required" });
@@ -306,15 +306,20 @@ superAdminRouter.patch(
   async (req, res) => {
     try {
       const { confirmPassword, oldPassword, newPassword } = req.body;
+      if (!oldPassword || !newPassword || !confirmPassword) {
+        return res.status(400).json({
+          message:
+            "Old password , confirm password and new password are required",
+        });
+      }
       if (confirmPassword !== newPassword) {
         return res.status(400).json({
           message: "New password and confirm password do not match",
         });
       }
-      if (!oldPassword || !newPassword || !confirmPassword) {
+      if (oldPassword === newPassword) {
         return res.status(400).json({
-          message:
-            "Old password , confirm password and new password are required",
+          message: "New password cannot be the same as old password",
         });
       }
       validatePassword(newPassword);
