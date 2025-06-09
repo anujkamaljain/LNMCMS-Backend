@@ -17,7 +17,7 @@ adminRouter.get(
     const complaints = await Complaint.find({
       tags: department,
       status: "pending",
-    });
+    }).populate("studentId", "name email");
     if (complaints.length == 0) {
       return res.status(200).json({
         message:
@@ -42,7 +42,7 @@ adminRouter.get(
     const complaints = await Complaint.find({
       tags: department,
       status: "accepted",
-    });
+    }).populate("studentId", "name email");
     if (complaints.length == 0) {
       return res.status(200).json({
         message:
@@ -67,7 +67,7 @@ adminRouter.get(
     const complaints = await Complaint.find({
       tags: department,
       status: "resolved",
-    });
+    }).populate("studentId", "name email");
     if (complaints.length == 0) {
       return res.status(200).json({
         message: "No record found!",
@@ -80,14 +80,43 @@ adminRouter.get(
   }
 );
 
+// API for accepting a complaint
 adminRouter.patch(
-  "/admin/complaints/accept/:id",
+  "/admin/complaint/accept/:id",
   userAuth,
   isAdmin,
   async (req, res) => {
-    const { _id } = req.body;
-
+    const _id  = req.params.id;
+    if(!_id){
+        return res.status(400).json({
+            message: "Complaint ID is required."
+        });
+    }
+    const complaint = await Complaint.findOne({_id: _id, status: "pending"});
+    if (!complaint) {
+      return res.status(404).json({
+        message: "Complaint not found.",
+      });
+    }
+    if(!complaint.tags.includes(req.user.department.toUpperCase())) {
+        return res.status(403).json({
+            message: "You cannot accept this complaint as it does not belong to your department.",
+        });
+    }
+    if (complaint.status !== "pending") {
+      return res.status(400).json({
+        message: "Complaint is not in pending status.",
+      });
+    }
+    complaint.status = "accepted";
+    complaint.acceptedBy = req.user._id;
+    await complaint.save();
+    const populatedComplaint = await Complaint.findById(_id).populate("acceptedBy", "name email").populate("studentId", "name email");
+    res.status(200).json({
+      message: "Complaint accepted successfully.",
+      data: populatedComplaint,
+    });
   }
-);
+)
 
 module.exports = adminRouter;

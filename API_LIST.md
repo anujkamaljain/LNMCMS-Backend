@@ -19,7 +19,7 @@ ADMIN
 - /admin/complaints/pending (GET)
 - /admin/complaints/accepted (GET)
 - /admin/complaints/resolved (GET)
-- /admin/complaints/:id/accept (PATCH)
+- /admin/complaint/:id/accept (PATCH)
 - /admin/changepassword (PATCH)
 
 STUDENT 

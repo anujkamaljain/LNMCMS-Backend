@@ -27,7 +27,7 @@ const userAuth = async (req, res, next) => {
       next();
     }
   } catch (err) {
-    return res.status(401).json({ message: "Please Login" });
+    return res.status(401).json({ message: "Invalid Token! Please Login" });
   }
 };
 
