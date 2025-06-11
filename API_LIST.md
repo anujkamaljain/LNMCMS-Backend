@@ -14,6 +14,8 @@ SUPER ADMIN
 - /superadmin/admin (PATCH)
 - /superadmin/superadmin (PATCH)
 - /superadmin/changepassword (PATCH)
+- /superadmin/complaints/by-department (GET)
+- /superadmin/complaints/monthly (GET)
 
 ADMIN
 - /admin/complaints/pending (GET)

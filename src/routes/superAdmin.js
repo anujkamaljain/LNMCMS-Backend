@@ -12,6 +12,7 @@ const fs = require("fs");
 const generatePassword = require("../utils/generatePassword");
 const sendMail = require("../utils/sendMail");
 const { validatePassword, ValidateEditData } = require("../helpers/validation");
+const Complaint = require("../models/complaints");
 
 // POST API for creating a single super admin
 superAdminRouter.post(
@@ -404,6 +405,106 @@ superAdminRouter.patch(
       });
     } catch (err) {
       res.status(500).json({ message: err.message });
+    }
+  }
+);
+
+// GET API to get monthly complaints count for the last 6 months
+superAdminRouter.get(
+  "/superadmin/complaints/monthly",
+  userAuth,
+  isSuperAdmin,
+  async (req, res) => {
+    try {
+      const now = new Date();
+      const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+
+      const results = await Complaint.aggregate([
+        {
+          $match: {
+            createdAt: { $gte: sixMonthsAgo },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              year: { $year: "$createdAt" },
+              month: { $month: "$createdAt" },
+            },
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $sort: {
+            "_id.year": 1,
+            "_id.month": 1,
+          },
+        },
+      ]);
+
+      const monthMap = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ];
+      const response = {};
+      results.forEach(({ _id, count }) => {
+        const monthName = monthMap[_id.month - 1];
+        response[monthName] = count;
+      });
+
+      res.json(response);
+    } catch (err) {
+      console.error("Monthly complaint aggregation error:", err);
+      res.status(500).json({ message: "Server Error" });
+    }
+  }
+);
+
+// GET API to get complaints count by department
+superAdminRouter.get(
+  "/superadmin/complaints/by-department",
+  userAuth,
+  isSuperAdmin,
+  async (req, res) => {
+    try {
+      const result = await Complaint.aggregate([
+        { $unwind: "$tags" }, // flatten the tags array
+        {
+          $group: {
+            _id: "$tags",
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { _id: 1 } },
+        {
+          $project: {
+            tag: "$_id",
+            count: 1,
+            _id: 0,
+          },
+        },
+      ]);
+
+      // Convert to object like { "BH4": 5, "Mess": 2 }
+      const response = {};
+      result.forEach((item) => {
+        response[item.tag] = item.count;
+      });
+
+      res.json(response);
+    } catch (err) {
+      console.error("Error grouping complaints by tags:", err);
+      res.status(500).json({ message: "Internal server error" });
     }
   }
 );
