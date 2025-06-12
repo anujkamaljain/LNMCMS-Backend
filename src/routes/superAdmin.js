@@ -45,6 +45,11 @@ superAdminRouter.post(
         message: "Super Admin created successfully",
         data: newSuperAdmin,
       });
+      await sendMail({
+        to: email,
+        subject: "Welcome to Complaint Portal",
+        text: `Your Super Admin account is created.\n\n Your Login credentials are as follows: \n\nEmail: ${email}\nPassword: ${password}. \n\nPlease change your password after logging in.`,
+      });
     } catch (err) {
       res.status(500).json({ message: err.message });
     }
