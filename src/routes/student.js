@@ -190,4 +190,61 @@ studentRouter.patch(
   }
 );
 
+// GET API - Monthly complaints for current year for logged-in student
+studentRouter.get(
+  "/student/complaints/monthly",
+  userAuth,
+  isStudent,
+  async (req, res) => {
+    try {
+      const studentId = req.user._id;
+
+      // Get start and end of current year
+      const now = new Date();
+      const startOfYear = new Date(now.getFullYear(), 0, 1); // Jan 1
+      const endOfYear = new Date(now.getFullYear(), 11, 31, 23, 59, 59); // Dec 31
+
+      const results = await Complaint.aggregate([
+        {
+          $match: {
+            studentId: studentId,
+            createdAt: { $gte: startOfYear, $lte: endOfYear },
+          },
+        },
+        {
+          $group: {
+            _id: { month: { $month: "$createdAt" } },
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $sort: { "_id.month": 1 },
+        },
+      ]);
+
+      const monthMap = [
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+      ];
+
+      // Initialize with 0 for all months
+      const response = {};
+      for (let i = 0; i < 12; i++) {
+        response[monthMap[i]] = 0;
+      }
+
+      // Fill in data from aggregation
+      results.forEach(({ _id, count }) => {
+        const monthName = monthMap[_id.month - 1];
+        response[monthName] = count;
+      });
+
+      res.json(response);
+    } catch (err) {
+      console.error("Student monthly complaint error:", err);
+      res.status(500).json({ message: "Server Error" });
+    }
+  }
+);
+
 module.exports = studentRouter;
