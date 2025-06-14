@@ -153,8 +153,12 @@ superAdminRouter.delete(
           .status(400)
           .json({ message: "Email is required. Please Loin" });
       }
+      const superAdminCount = await SuperAdmin.countDocuments();
+      if(superAdminCount == 1){
+        return res.status(500).json({ message: "You are the last Super Admin. Cannot delete your account!"});
+      } 
       const deletedCount = await SuperAdmin.deleteOne({ email: email });
-      if (deletedCount.deletedCount === 0) {
+      if (deletedCount === 0) {
         return res.status(404).json({ message: "Unable to delete account." });
       }
       res.clearCookie("token");
