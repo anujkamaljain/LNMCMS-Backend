@@ -42,7 +42,9 @@ adminRouter.get(
     const complaints = await Complaint.find({
       tags: department,
       status: "accepted",
-    }).populate("acceptedBy", "name email").populate("studentId", "rollNumber");
+    })
+      .populate("acceptedBy", "name email")
+      .populate("studentId", "rollNumber");
     if (complaints.length == 0) {
       return res.status(200).json({
         message:
@@ -67,7 +69,9 @@ adminRouter.get(
     const complaints = await Complaint.find({
       tags: department,
       status: "resolved",
-    }).populate("acceptedBy", "name email").populate("studentId", "rollNumber");
+    })
+      .populate("acceptedBy", "name email")
+      .populate("studentId", "rollNumber");
     if (complaints.length == 0) {
       return res.status(200).json({
         message: "No record found!",
@@ -86,22 +90,26 @@ adminRouter.patch(
   userAuth,
   isAdmin,
   async (req, res) => {
-    const _id  = req.params.id;
-    if(!_id){
-        return res.status(400).json({
-            message: "Complaint ID is required."
-        });
+    const _id = req.params.id;
+    if (!_id) {
+      return res.status(400).json({
+        message: "Complaint ID is required.",
+      });
     }
-    const complaint = await Complaint.findOne({_id: _id}).populate("acceptedBy", "name email");
+    const complaint = await Complaint.findOne({ _id: _id }).populate(
+      "acceptedBy",
+      "name email"
+    );
     if (!complaint) {
       return res.status(404).json({
         message: "Complaint not found.",
       });
     }
-    if(!complaint.tags.includes(req.user.department.toUpperCase())) {
-        return res.status(403).json({
-            message: "You cannot accept this complaint as it does not belong to your department.",
-        });
+    if (!complaint.tags.includes(req.user.department.toUpperCase())) {
+      return res.status(403).json({
+        message:
+          "You cannot accept this complaint as it does not belong to your department.",
+      });
     }
     if (complaint.status === "accepted") {
       return res.status(400).json({
@@ -116,7 +124,9 @@ adminRouter.patch(
     complaint.status = "accepted";
     complaint.acceptedBy = req.user._id;
     await complaint.save();
-    const populatedComplaint = await Complaint.findById(_id).populate("acceptedBy", "name email").populate("studentId", "rollNumber");
+    const populatedComplaint = await Complaint.findById(_id)
+      .populate("acceptedBy", "name email")
+      .populate("studentId", "rollNumber");
     res.status(200).json({
       message: "Complaint accepted successfully.",
       data: populatedComplaint,
@@ -165,5 +175,135 @@ adminRouter.patch(
     }
   }
 );
+
+adminRouter.get(
+  "/admin/complaints/last-30-days", userAuth, async (req, res) => {
+  try {
+    const { department } = req.user;
+
+    const now = new Date();
+
+    // ✅ Set correct UTC date range
+    const endDate = new Date(Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate(),
+      23, 59, 59, 999
+    ));
+
+    const startDate = new Date(Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate() - 29,
+      0, 0, 0, 0
+    ));
+
+    const complaints = await Complaint.aggregate([
+      {
+        $match: {
+          tags: { $in: [department] },
+          createdAt: {
+            $gte: startDate,
+            $lte: endDate,
+          },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
+          },
+          count: { $sum: 1 },
+        },
+      },
+      {
+        $sort: { _id: 1 },
+      },
+    ]);
+
+    // Initialize 30-day structure
+    const formattedData = {};
+    for (let i = 0; i < 30; i++) {
+      const date = new Date(startDate);
+      date.setUTCDate(date.getUTCDate() + i);
+      const dateStr = date.toISOString().split('T')[0];
+      formattedData[dateStr] = 0;
+    }
+
+    // Fill in complaint counts
+    complaints.forEach(item => {
+      formattedData[item._id] = item.count;
+    });
+
+    return res.status(200).json({ message: "data fetched!", data: formattedData });
+  } catch (error) {
+    console.error("Error fetching complaints:", error);
+    return res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+});
+
+adminRouter.get(
+  "/admin/complaints/status-complaints-30-days",
+  userAuth,
+  isAdmin,
+  async (req, res) => {
+    try {
+      const { department } = req.user;
+
+      const now = new Date();
+
+      const endDate = new Date(Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate(),
+        23, 59, 59, 999
+      ));
+
+      const startDate = new Date(Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate() - 29,
+        0, 0, 0, 0
+      ));
+
+      const result = await Complaint.aggregate([
+        {
+          $match: {
+            tags: { $in: [department] },
+            createdAt: {
+              $gte: startDate,
+              $lte: endDate,
+            },
+          },
+        },
+        {
+          $group: {
+            _id: "$status",
+            count: { $sum: 1 },
+          },
+        },
+      ]);
+
+      const summary = {
+        pending: 0,
+        accepted: 0,
+        resolved: 0,
+      };
+
+      result.forEach(item => {
+        summary[item._id] = item.count;
+      });
+
+      return res.status(200).json({
+        message: "Status summary fetched successfully",
+        data: summary,
+      });
+    } catch (error) {
+      console.error("Error fetching complaint status summary:", error);
+      return res.status(500).json({message: "Internal Server Error" });
+    }
+  }
+);
+
 
 module.exports = adminRouter;

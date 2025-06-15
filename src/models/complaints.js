@@ -32,6 +32,7 @@ const complaintSchema = new mongoose.Schema(
       type: String,
       enum: ["pending", "accepted", "resolved"],
       default: "pending",
+      required: true
     },
     acceptedBy: {
       type: mongoose.Schema.Types.ObjectId,
