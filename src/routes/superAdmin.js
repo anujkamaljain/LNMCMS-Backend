@@ -154,9 +154,14 @@ superAdminRouter.delete(
           .json({ message: "Email is required. Please Loin" });
       }
       const superAdminCount = await SuperAdmin.countDocuments();
-      if(superAdminCount == 1){
-        return res.status(500).json({ message: "You are the last Super Admin. Cannot delete your account!"});
-      } 
+      if (superAdminCount == 1) {
+        return res
+          .status(500)
+          .json({
+            message:
+              "You are the last Super Admin. Cannot delete your account!",
+          });
+      }
       const deletedCount = await SuperAdmin.deleteOne({ email: email });
       if (deletedCount === 0) {
         return res.status(404).json({ message: "Unable to delete account." });
@@ -217,15 +222,25 @@ superAdminRouter.delete(
 
       rollNumber = rollNumber.toUpperCase();
 
-      const deletedStudent = await Student.findOneAndDelete({ rollNumber });
+      const user = await Student.findOne({ rollNumber });
 
-      if (!deletedStudent) {
+      if (!user) {
         return res.status(404).json({ message: "Student not found" });
+      }
+
+      const deletedComplaints = await Complaint.deleteMany({
+        studentId: user._id,
+      });
+
+      const deletedStudent = await Student.deleteOne({ rollNumber });
+
+      if (!deletedStudent.deletedCount === 0) {
+        return res.status(404).json({ message: "Student not deleted" });
       }
 
       res.status(200).json({
         message: "Student deleted successfully",
-        data: deletedStudent,
+        data: user,
       });
     } catch (err) {
       res.status(500).json({ message: err.message });
@@ -628,20 +643,24 @@ superAdminRouter.delete(
             let { rollNumber } = row;
 
             if (!rollNumber?.trim()) continue;
-            rollNumber = rollNumber.toUpperCase();
-            const op = Student.deleteOne({ rollNumber: rollNumber.trim() })
-              .then((res) => {
-                if (res.deletedCount === 0) {
-                  console.warn(
-                    `No student found for rollNumber: ${rollNumber}`
-                  );
+            rollNumber = rollNumber.toUpperCase().trim();
+
+            const op = Student.findOne({ rollNumber })
+              .then(async (student) => {
+                if (!student) {
+                  console.log(`No student found for rollNumber: ${rollNumber}`);
+                  return;
+                }
+
+                await Complaint.deleteMany({ studentId: student._id });
+                const deleteResult = await Student.deleteOne({ _id: student._id });
+
+                if (deleteResult.deletedCount === 0) {
+                  console.log(`Failed to delete student: ${rollNumber}`);
                 }
               })
               .catch((err) => {
-                console.error(
-                  `Error deleting student with rollNumber ${rollNumber}:`,
-                  err.message
-                );
+                console.error(`Error processing rollNumber ${rollNumber}:`, err.message);
               });
 
             operations.push(op);
@@ -649,12 +668,13 @@ superAdminRouter.delete(
 
           await Promise.allSettled(operations);
 
+
           fs.unlink(req.file.path, (err) => {
             if (err) console.error("Error deleting file:", err);
           });
 
           res.status(200).json({
-            message: "Deletion process initiated for all matching students.",
+            message: "Deletion process completed for all matching students and their complaints.",
           });
         });
     } catch (err) {
@@ -662,5 +682,6 @@ superAdminRouter.delete(
     }
   }
 );
+
 
 module.exports = superAdminRouter;
