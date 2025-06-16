@@ -177,70 +177,87 @@ adminRouter.patch(
 );
 
 adminRouter.get(
-  "/admin/complaints/last-30-days", userAuth, async (req, res) => {
-  try {
-    const { department } = req.user;
+  "/admin/complaints/last-30-days",
+  userAuth,
+  async (req, res) => {
+    try {
+      const { department } = req.user;
 
-    const now = new Date();
+      const now = new Date();
 
-    // ✅ Set correct UTC date range
-    const endDate = new Date(Date.UTC(
-      now.getUTCFullYear(),
-      now.getUTCMonth(),
-      now.getUTCDate(),
-      23, 59, 59, 999
-    ));
+      // ✅ Set correct UTC date range
+      const endDate = new Date(
+        Date.UTC(
+          now.getUTCFullYear(),
+          now.getUTCMonth(),
+          now.getUTCDate(),
+          23,
+          59,
+          59,
+          999
+        )
+      );
 
-    const startDate = new Date(Date.UTC(
-      now.getUTCFullYear(),
-      now.getUTCMonth(),
-      now.getUTCDate() - 29,
-      0, 0, 0, 0
-    ));
+      const startDate = new Date(
+        Date.UTC(
+          now.getUTCFullYear(),
+          now.getUTCMonth(),
+          now.getUTCDate() - 29,
+          0,
+          0,
+          0,
+          0
+        )
+      );
 
-    const complaints = await Complaint.aggregate([
-      {
-        $match: {
-          tags: { $in: [department] },
-          createdAt: {
-            $gte: startDate,
-            $lte: endDate,
+      const complaints = await Complaint.aggregate([
+        {
+          $match: {
+            tags: { $in: [department] },
+            createdAt: {
+              $gte: startDate,
+              $lte: endDate,
+            },
           },
         },
-      },
-      {
-        $group: {
-          _id: {
-            $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
+        {
+          $group: {
+            _id: {
+              $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
+            },
+            count: { $sum: 1 },
           },
-          count: { $sum: 1 },
         },
-      },
-      {
-        $sort: { _id: 1 },
-      },
-    ]);
+        {
+          $sort: { _id: 1 },
+        },
+      ]);
 
-    // Initialize 30-day structure
-    const formattedData = {};
-    for (let i = 0; i < 30; i++) {
-      const date = new Date(startDate);
-      date.setUTCDate(date.getUTCDate() + i);
-      const dateStr = date.toISOString().split('T')[0];
-      formattedData[dateStr] = 0;
+      // Initialize 30-day structure
+      const formattedData = {};
+      for (let i = 0; i < 30; i++) {
+        const date = new Date(startDate);
+        date.setUTCDate(date.getUTCDate() + i);
+        const dateStr = date.toISOString().split("T")[0];
+        formattedData[dateStr] = 0;
+      }
+
+      // Fill in complaint counts
+      complaints.forEach((item) => {
+        formattedData[item._id] = item.count;
+      });
+
+      return res
+        .status(200)
+        .json({ message: "data fetched!", data: formattedData });
+    } catch (error) {
+      console.error("Error fetching complaints:", error);
+      return res
+        .status(500)
+        .json({ success: false, message: "Internal Server Error" });
     }
-
-    // Fill in complaint counts
-    complaints.forEach(item => {
-      formattedData[item._id] = item.count;
-    });
-
-    return res.status(200).json({ message: "data fetched!", data: formattedData });
-  } catch (error) {
-    console.error("Error fetching complaints:", error);
-    return res.status(500).json({ success: false, message: "Internal Server Error" });
   }
-});
+);
 
 adminRouter.get(
   "/admin/complaints/status-complaints-30-days",
@@ -252,19 +269,29 @@ adminRouter.get(
 
       const now = new Date();
 
-      const endDate = new Date(Date.UTC(
-        now.getUTCFullYear(),
-        now.getUTCMonth(),
-        now.getUTCDate(),
-        23, 59, 59, 999
-      ));
+      const endDate = new Date(
+        Date.UTC(
+          now.getUTCFullYear(),
+          now.getUTCMonth(),
+          now.getUTCDate(),
+          23,
+          59,
+          59,
+          999
+        )
+      );
 
-      const startDate = new Date(Date.UTC(
-        now.getUTCFullYear(),
-        now.getUTCMonth(),
-        now.getUTCDate() - 29,
-        0, 0, 0, 0
-      ));
+      const startDate = new Date(
+        Date.UTC(
+          now.getUTCFullYear(),
+          now.getUTCMonth(),
+          now.getUTCDate() - 29,
+          0,
+          0,
+          0,
+          0
+        )
+      );
 
       const result = await Complaint.aggregate([
         {
@@ -290,7 +317,7 @@ adminRouter.get(
         resolved: 0,
       };
 
-      result.forEach(item => {
+      result.forEach((item) => {
         summary[item._id] = item.count;
       });
 
@@ -300,10 +327,9 @@ adminRouter.get(
       });
     } catch (error) {
       console.error("Error fetching complaint status summary:", error);
-      return res.status(500).json({message: "Internal Server Error" });
+      return res.status(500).json({ message: "Internal Server Error" });
     }
   }
 );
-
 
 module.exports = adminRouter;
