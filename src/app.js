@@ -23,6 +23,11 @@ app.use("/", superAdminRouter);
 app.use("/", adminRouter);
 app.use("/", studentRouter);
 
+app.get("/", (req, res) => {
+  res.status(200).send("LNMCMS Backend is alive 🚀");
+});
+
+
 connectDB()
   .then(() => {
     console.log("Database connected successfully.");
