@@ -276,6 +276,70 @@ superAdminRouter.get(
   }
 );
 
+// GET API to fetch students for PAGINATION
+superAdminRouter.get(
+  "/superadmin/students",
+  userAuth,
+  isSuperAdmin,
+  async (req, res) => {
+    try {
+      let { page = 1, limit = 20 } = req.query;
+      page = parseInt(page);
+      limit = parseInt(limit);
+
+      const skip = (page - 1) * limit;
+
+      const students = await Student.find()
+        .sort({ rollNumber: 1 }) // optional: sort alphabetically
+        .skip(skip)
+        .limit(limit);
+
+      const totalStudents = await Student.countDocuments();
+      const totalPages = Math.ceil(totalStudents / limit);
+
+      res.status(200).json({
+        students,
+        totalPages,
+        currentPage: page,
+      });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }
+);
+
+// GET API to fetch admins for PAGINATION
+superAdminRouter.get(
+  "/superadmin/admins",
+  userAuth,
+  isSuperAdmin,
+  async (req, res) => {
+    try {
+      let { page = 1, limit = 16 } = req.query;
+      page = parseInt(page);
+      limit = parseInt(limit);
+
+      const skip = (page - 1) * limit;
+
+      const admins = await Admin.find()
+        .sort({ email: 1 }) // optional: sort alphabetically
+        .skip(skip)
+        .limit(limit);
+
+      const totalAdmins = await Admin.countDocuments();
+      const totalPages = Math.ceil(totalAdmins / limit);
+
+      res.status(200).json({
+        admins,
+        totalPages,
+        currentPage: page,
+      });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }
+);
+
 // GET API to fetch admin by email
 superAdminRouter.get(
   "/superadmin/admin/:email",
@@ -541,7 +605,7 @@ superAdminRouter.get(
   }
 );
 
-//temporary storing uploaded file
+// Temporary storing uploaded file
 const upload = multer({ dest: "uploads/" });
 // POST API for bulk uploading students from a CSV file
 superAdminRouter.post(
@@ -556,6 +620,9 @@ superAdminRouter.post(
       }
 
       const results = [];
+      const alreadyCreated = [];
+      const failedToCreate = [];
+
       fs.createReadStream(req.file.path)
         .pipe(csv())
         .on("data", (data) => results.push(data))
@@ -564,53 +631,85 @@ superAdminRouter.post(
 
           for (const row of results) {
             let { name, email, rollNumber } = row;
-            if (!name?.trim() || !email?.trim() || !rollNumber?.trim())
+
+            // Validate input fields
+            if (!name?.trim() || !email?.trim() || !rollNumber?.trim()) {
+              failedToCreate.push({
+                name: name || "-",
+                email: email || "-",
+                rollNumber: rollNumber || "-",
+                reason: "Missing required fields",
+              });
               continue;
+            }
 
+            // Check for duplicate
             const existingUser = await Student.findOne({ email });
-            if (existingUser) continue;
-            rollNumber = rollNumber.toUpperCase();
-            const randpassword = generatePassword(8);
-            validatePassword(randpassword);
-            const passwordHash = await bcrypt.hash(randpassword, 10);
+            if (existingUser) {
+              alreadyCreated.push({
+                name,
+                email,
+                rollNumber,
+              });
+              continue;
+            }
 
-            const student = new Student({
-              name,
-              email,
-              rollNumber,
-              password: passwordHash,
-              role: "student",
-            });
+            try {
+              rollNumber = rollNumber.toUpperCase();
+              const randpassword = generatePassword(8);
+              validatePassword(randpassword); // throws if invalid
+              const passwordHash = await bcrypt.hash(randpassword, 10);
 
-            // Save student and send email in background
-            const op = student
-              .save()
-              .then(() =>
-                sendMail({
-                  to: email,
-                  subject: "Welcome to Complaint Portal",
-                  text: `Your student account is created.\n\n Your Login credentials are as follows: \n\nEmail: ${email}\nPassword: ${randpassword} \n\nPlease change your password after logging in.`,
-                }).catch((err) => {
-                  console.error("Email error:", email, err.message);
-                })
-              )
-              .catch((err) => {
-                console.error("DB Save error:", email, err.message);
+              const student = new Student({
+                name,
+                email,
+                rollNumber,
+                password: passwordHash,
+                role: "student",
               });
 
-            operations.push(op);
+              const op = student
+                .save()
+                .then(() =>
+                  sendMail({
+                    to: email,
+                    subject: "Welcome to Complaint Portal",
+                    text: `Your student account is created.\n\nYour credentials:\nEmail: ${email}\nPassword: ${randpassword}\n\nPlease change your password after logging in.`,
+                  }).catch((err) => {
+                    console.error("Email error:", email, err.message);
+                  })
+                )
+                .catch((err) => {
+                  console.error("DB Save error:", email, err.message);
+                  failedToCreate.push({
+                    name,
+                    email,
+                    rollNumber,
+                    reason: "Database save error",
+                  });
+                });
+
+              operations.push(op);
+            } catch (err) {
+              failedToCreate.push({
+                name,
+                email,
+                rollNumber,
+                reason: err.message || "Invalid data",
+              });
+            }
           }
 
-          Promise.allSettled(operations).then(() => {
-            console.log("Work Done: All students are created and emails sent.");
-          });
+          await Promise.allSettled(operations);
 
           fs.unlink(req.file.path, (err) => {
             if (err) console.error("Error deleting file:", err);
           });
 
           res.status(201).json({
-            message: "Students are being registered and emails are being sent.",
+            message: "Bulk student creation completed.",
+            alreadyCreated,
+            failedToCreate,
           });
         });
     } catch (err) {
@@ -619,6 +718,8 @@ superAdminRouter.post(
     }
   }
 );
+
+
 
 // DELETE API for bulk deleting students from a CSV file using DELETE method
 superAdminRouter.delete(
@@ -633,6 +734,9 @@ superAdminRouter.delete(
       }
 
       const results = [];
+      const notFound = [];
+      const failedDeletions = [];
+
       fs.createReadStream(req.file.path)
         .pipe(csv())
         .on("data", (data) => results.push(data))
@@ -648,19 +752,35 @@ superAdminRouter.delete(
             const op = Student.findOne({ rollNumber })
               .then(async (student) => {
                 if (!student) {
-                  console.log(`No student found for rollNumber: ${rollNumber}`);
+                  notFound.push({
+                    rollNumber,
+                    reason: "Student not found in DB",
+                  });
                   return;
                 }
 
-                await Complaint.deleteMany({ studentId: student._id });
-                const deleteResult = await Student.deleteOne({ _id: student._id });
+                try {
+                  await Complaint.deleteMany({ studentId: student._id });
 
-                if (deleteResult.deletedCount === 0) {
-                  console.log(`Failed to delete student: ${rollNumber}`);
+                  const deleteResult = await Student.deleteOne({ _id: student._id });
+                  if (deleteResult.deletedCount === 0) {
+                    failedDeletions.push({
+                      rollNumber,
+                      reason: "Student found but could not be deleted",
+                    });
+                  }
+                } catch (err) {
+                  failedDeletions.push({
+                    rollNumber,
+                    reason: `Error while deleting: ${err.message}`,
+                  });
                 }
               })
               .catch((err) => {
-                console.error(`Error processing rollNumber ${rollNumber}:`, err.message);
+                failedDeletions.push({
+                  rollNumber,
+                  reason: `Unexpected error: ${err.message}`,
+                });
               });
 
             operations.push(op);
@@ -668,17 +788,18 @@ superAdminRouter.delete(
 
           await Promise.allSettled(operations);
 
-
           fs.unlink(req.file.path, (err) => {
-            if (err) console.error("Error deleting file:", err);
+            if (err) console.error("Error deleting uploaded CSV file:", err);
           });
 
           res.status(200).json({
-            message: "Deletion process completed for all matching students and their complaints.",
+            message: "Deletion process completed.",
+            failedDeletions,
+            notFound,
           });
         });
     } catch (err) {
-      res.status(500).json({ message: err.message });
+      res.status(500).json({ message: "Internal server error", error: err.message });
     }
   }
 );
