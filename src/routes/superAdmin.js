@@ -155,12 +155,9 @@ superAdminRouter.delete(
       }
       const superAdminCount = await SuperAdmin.countDocuments();
       if (superAdminCount == 1) {
-        return res
-          .status(500)
-          .json({
-            message:
-              "You are the last Super Admin. Cannot delete your account!",
-          });
+        return res.status(500).json({
+          message: "You are the last Super Admin. Cannot delete your account!",
+        });
       }
       const deletedCount = await SuperAdmin.deleteOne({ email: email });
       if (deletedCount === 0) {
@@ -605,9 +602,61 @@ superAdminRouter.get(
   }
 );
 
+//17. GET API to fetch student by Object id
+superAdminRouter.get(
+  "/superadmin/student/get/:id",
+  userAuth,
+  isSuperAdmin,
+  async (req, res) => {
+    try {
+      let { id } = req.params;
+      if (!id) {
+        return res.status(400).json({ message: "id is required" });
+      }
+      const student = await Student.findById({ _id: id });
+      if (!student) {
+        return res.status(404).json({
+          message: `Student not found.`,
+        });
+      }
+      res.status(200).json({
+        message: "Student found",
+        data: student,
+      });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }
+);
+
+//18. GET API to fetch admin by Object id
+superAdminRouter.get(
+  "/superadmin/admin/get/:id",
+  userAuth,
+  isSuperAdmin,
+  async (req, res) => {
+    try {
+      let { id } = req.params;
+      if (!id) {
+        return res.status(400).json({ message: "id is required" });
+      }
+      const admin = await Admin.findById({ _id: id });
+      if (!admin) {
+        return res.status(404).json({ message: `Admin not found.` });
+      }
+      res.status(200).json({
+        message: "Admin found",
+        data: admin,
+      });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  }
+);
+
 // Temporary storing uploaded file
 const upload = multer({ dest: "uploads/" });
-//17. POST API for bulk uploading students from a CSV file
+//19. POST API for bulk uploading students from a CSV file
 superAdminRouter.post(
   "/superadmin/students",
   userAuth,
@@ -642,7 +691,7 @@ superAdminRouter.post(
               });
               continue;
             }
-           rollNumber = rollNumber.toUpperCase();
+            rollNumber = rollNumber.toUpperCase();
             // Check for duplicate
             const existingUser = await Student.findOne({ email });
             if (existingUser) {
@@ -719,7 +768,7 @@ superAdminRouter.post(
   }
 );
 
-//18. DELETE API for bulk deleting students from a CSV file using DELETE method
+//20. DELETE API for bulk deleting students from a CSV file using DELETE method
 superAdminRouter.delete(
   "/superadmin/students",
   userAuth,
@@ -760,7 +809,9 @@ superAdminRouter.delete(
                 try {
                   await Complaint.deleteMany({ studentId: student._id });
 
-                  const deleteResult = await Student.deleteOne({ _id: student._id });
+                  const deleteResult = await Student.deleteOne({
+                    _id: student._id,
+                  });
                   if (deleteResult.deletedCount === 0) {
                     failedDeletions.push({
                       rollNumber,
@@ -797,10 +848,11 @@ superAdminRouter.delete(
           });
         });
     } catch (err) {
-      res.status(500).json({ message: "Internal server error", error: err.message });
+      res
+        .status(500)
+        .json({ message: "Internal server error", error: err.message });
     }
   }
 );
-
 
 module.exports = superAdminRouter;
