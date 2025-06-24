@@ -14,7 +14,7 @@ const sendMail = require("../utils/sendMail");
 const { validatePassword, ValidateEditData } = require("../helpers/validation");
 const Complaint = require("../models/complaints");
 
-// POST API for creating a single super admin
+//1. POST API for creating a single super admin
 superAdminRouter.post(
   "/superadmin/superadmin",
   userAuth,
@@ -56,7 +56,7 @@ superAdminRouter.post(
   }
 );
 
-// POST API for creating a single admin
+//2. POST API for creating a single admin
 superAdminRouter.post(
   "/superadmin/admin",
   userAuth,
@@ -98,7 +98,7 @@ superAdminRouter.post(
   }
 );
 
-// POST API for creating a single student
+//3. POST API for creating a single student
 superAdminRouter.post(
   "/superadmin/student",
   userAuth,
@@ -140,7 +140,7 @@ superAdminRouter.post(
   }
 );
 
-// DELETE API to delete your own super admin account
+//4. DELETE API to delete your own super admin account
 superAdminRouter.delete(
   "/superadmin/superadmin",
   userAuth,
@@ -176,7 +176,7 @@ superAdminRouter.delete(
   }
 );
 
-// DELETE API to delete admin by email (email passed as URL param)
+//5. DELETE API to delete admin by email (email passed as URL param)
 superAdminRouter.delete(
   "/superadmin/admin/:email",
   userAuth,
@@ -207,7 +207,7 @@ superAdminRouter.delete(
   }
 );
 
-// DELETE API to delete Student by Roll Number
+//6. DELETE API to delete Student by Roll Number
 superAdminRouter.delete(
   "/superadmin/student/:rollNumber",
   userAuth,
@@ -248,7 +248,7 @@ superAdminRouter.delete(
   }
 );
 
-// GET API to fetch student by Roll Number
+//7. GET API to fetch student by Roll Number
 superAdminRouter.get(
   "/superadmin/student/:rollNumber",
   userAuth,
@@ -276,7 +276,7 @@ superAdminRouter.get(
   }
 );
 
-// GET API to fetch students for PAGINATION
+//8. GET API to fetch students for PAGINATION
 superAdminRouter.get(
   "/superadmin/students",
   userAuth,
@@ -308,7 +308,7 @@ superAdminRouter.get(
   }
 );
 
-// GET API to fetch admins for PAGINATION
+//9. GET API to fetch admins for PAGINATION
 superAdminRouter.get(
   "/superadmin/admins",
   userAuth,
@@ -340,7 +340,7 @@ superAdminRouter.get(
   }
 );
 
-// GET API to fetch admin by email
+//10. GET API to fetch admin by email
 superAdminRouter.get(
   "/superadmin/admin/:email",
   userAuth,
@@ -368,7 +368,7 @@ superAdminRouter.get(
   }
 );
 
-// PATCH API to update super admin own details
+//11. PATCH API to update super admin own details
 superAdminRouter.patch(
   "/superadmin/superadmin",
   userAuth,
@@ -391,7 +391,7 @@ superAdminRouter.patch(
   }
 );
 
-// PATCH API to update super admin password
+//12. PATCH API to update super admin password
 superAdminRouter.patch(
   "/superadmin/changepassword",
   userAuth,
@@ -433,7 +433,7 @@ superAdminRouter.patch(
   }
 );
 
-// PATCH API to update admin details
+//13. PATCH API to update admin details
 superAdminRouter.patch(
   "/superadmin/admin/:adminId",
   userAuth,
@@ -465,7 +465,7 @@ superAdminRouter.patch(
   }
 );
 
-// PATCH API to update student details
+//14. PATCH API to update student details
 superAdminRouter.patch(
   "/superadmin/student/:studentId",
   userAuth,
@@ -497,7 +497,7 @@ superAdminRouter.patch(
   }
 );
 
-// GET API to get monthly complaints count for the last 6 months
+//15. GET API to get monthly complaints count for the last 6 months
 superAdminRouter.get(
   "/superadmin/complaints/monthly",
   userAuth,
@@ -558,7 +558,7 @@ superAdminRouter.get(
   }
 );
 
-// GET API to get complaints count by department
+//16. GET API to get complaints count by department
 superAdminRouter.get(
   "/superadmin/complaints/by-department",
   userAuth,
@@ -607,7 +607,7 @@ superAdminRouter.get(
 
 // Temporary storing uploaded file
 const upload = multer({ dest: "uploads/" });
-// POST API for bulk uploading students from a CSV file
+//17. POST API for bulk uploading students from a CSV file
 superAdminRouter.post(
   "/superadmin/students",
   userAuth,
@@ -642,7 +642,7 @@ superAdminRouter.post(
               });
               continue;
             }
-
+           rollNumber = rollNumber.toUpperCase();
             // Check for duplicate
             const existingUser = await Student.findOne({ email });
             if (existingUser) {
@@ -719,9 +719,7 @@ superAdminRouter.post(
   }
 );
 
-
-
-// DELETE API for bulk deleting students from a CSV file using DELETE method
+//18. DELETE API for bulk deleting students from a CSV file using DELETE method
 superAdminRouter.delete(
   "/superadmin/students",
   userAuth,
