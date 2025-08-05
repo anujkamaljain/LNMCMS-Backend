@@ -35,7 +35,10 @@ authRouter.post("/login", async (req, res) => {
       }
     }
     res.cookie("token", token, {
-      maxAge: 1000 * 60 * 60 * 8,
+      httpOnly: true,
+      sameSite: "None", // allows cross-site cookies
+      secure: true, // must be true for cross-site on HTTPS
+      maxAge: 1000 * 60 * 60 * 8, //8 hours
     });
     res.status(200).json({ message: "Login successful", data: user });
   } catch (err) {
