@@ -60,27 +60,27 @@ studentRouter.post(
   }
 );
 
-// GET /student/complaints — Fetch all complaints of the logged-in student
+// GET /student/complaints/pending
 studentRouter.get(
-  "/student/complaints",
+  "/student/complaints/pending",
   userAuth,
   isStudent,
   async (req, res) => {
     try {
       const studentId = req.user._id;
 
-      const complaints = await Complaint.find({ studentId })
+      const complaints = await Complaint.find({ studentId, status: "pending" })
         .populate("acceptedBy", "name email")
         .populate("studentId", "rollNumber");
 
       if (complaints.length === 0) {
         return res.status(200).json({
-          message: "You have not registered any complaints yet.",
+          message: "You have no pending complaints.",
         });
       }
 
       res.status(200).json({
-        message: "Your complaints have been fetched successfully.",
+        message: "Your pending complaints have been fetched successfully.",
         data: complaints,
       });
     } catch (err) {
@@ -88,6 +88,94 @@ studentRouter.get(
     }
   }
 );
+
+// GET /student/complaints/accepted
+studentRouter.get(
+  "/student/complaints/accepted",
+  userAuth,
+  isStudent,
+  async (req, res) => {
+    try {
+      const studentId = req.user._id;
+
+      const complaints = await Complaint.find({ studentId, status: "accepted" })
+        .populate("acceptedBy", "name email")
+        .populate("studentId", "rollNumber");
+
+      if (complaints.length === 0) {
+        return res.status(200).json({
+          message: "You have no accepted complaints.",
+        });
+      }
+
+      res.status(200).json({
+        message: "Your accepted complaints have been fetched successfully.",
+        data: complaints,
+      });
+    } catch (err) {
+      res.status(500).json({ message: "Server error: " + err.message });
+    }
+  }
+);
+
+// GET /student/complaints/resolved
+studentRouter.get(
+  "/student/complaints/resolved",
+  userAuth,
+  isStudent,
+  async (req, res) => {
+    try {
+      const studentId = req.user._id;
+
+      const complaints = await Complaint.find({ studentId, status: "resolved" })
+        .populate("acceptedBy", "name email")
+        .populate("studentId", "rollNumber");
+
+      if (complaints.length === 0) {
+        return res.status(200).json({
+          message: "You have no resolved complaints.",
+        });
+      }
+
+      res.status(200).json({
+        message: "Your resolved complaints have been fetched successfully.",
+        data: complaints,
+      });
+    } catch (err) {
+      res.status(500).json({ message: "Server error: " + err.message });
+    }
+  }
+);
+
+// GET /student/complaints — Fetch all complaints of the logged-in student
+
+// studentRouter.get(
+//   "/student/complaints",
+//   userAuth,
+//   isStudent,
+//   async (req, res) => {
+//     try {
+//       const studentId = req.user._id;
+
+//       const complaints = await Complaint.find({ studentId })
+//         .populate("acceptedBy", "name email")
+//         .populate("studentId", "rollNumber");
+
+//       if (complaints.length === 0) {
+//         return res.status(200).json({
+//           message: "You have not registered any complaints yet.",
+//         });
+//       }
+
+//       res.status(200).json({
+//         message: "Your complaints have been fetched successfully.",
+//         data: complaints,
+//       });
+//     } catch (err) {
+//       res.status(500).json({ message: "Server error: " + err.message });
+//     }
+//   }
+// );
 
 // PATCH /student/changepassword — Update student password
 studentRouter.patch("/student/changepassword", userAuth, isStudent, async (req, res) => {
