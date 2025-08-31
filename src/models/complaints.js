@@ -50,6 +50,12 @@ const complaintSchema = new mongoose.Schema(
         }
       },
     },
+    visibility: {
+      type: String,
+      enum: ["public", "private"],
+      default: "private",
+      required: true
+    },
     availableTimeFrom: {
       type: String,
       required: true,
