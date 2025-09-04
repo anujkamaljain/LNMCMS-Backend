@@ -28,6 +28,8 @@ STUDENT
 - /student/complaints/:id (GET)
 - /student/complaints (POST)
 - /student/complaints/:id/resolve (PATCH)
+- /student/complaints/public (GET)
+- /student/complaint/upvote/:id (PATCH) 
 - /student/forgotpassword (PATCH)
 
 AUTH

@@ -74,6 +74,16 @@ const complaintSchema = new mongoose.Schema(
         }
       },
     },
+    upvotes: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Student",
+      required: true
+    }],
+    upvoteCount: {
+      type: Number,
+      default: 0,
+      min: 0
+    }
   },
   { timestamps: true }
 );
@@ -84,6 +94,9 @@ complaintSchema.pre("save", async function (next){
   }
   if(this.isModified("status")){
     this.status = this.status.toLowerCase();
+  }
+  if (this.isModified("upvotes")) {
+    this.upvoteCount = this.upvotes.length;
   }
   next();
 });

@@ -198,30 +198,25 @@ studentRouter.patch(
 
       const student = req.user;
 
-      // Step 1: Check if old password is correct
       const isMatch = await bcrypt.compare(oldPassword, student.password);
       if (!isMatch) {
         return res.status(400).json({ message: "Old password is incorrect" });
       }
 
-      // Step 2: Ensure new and confirm passwords match
       if (newPassword !== confirmPassword) {
         return res.status(400).json({
           message: "New password and confirm password do not match",
         });
       }
 
-      // Step 3: Check if new password is different from old password
       if (oldPassword === newPassword) {
         return res.status(400).json({
           message: "New password cannot be the same as the old password",
         });
       }
 
-      // Step 4: Validate new password strength
-      validatePassword(newPassword); // throws error if weak
+      validatePassword(newPassword);
 
-      // Step 5: Save new password
       student.password = await bcrypt.hash(newPassword, 10);
       await student.save();
 
@@ -247,7 +242,6 @@ studentRouter.patch(
         return res.status(400).json({ message: "Complaint ID is required." });
       }
 
-      // Fetch the complaint and populate necessary fields
       const complaint = await Complaint.findOne({ _id }).populate(
         "acceptedBy",
         "name email"
@@ -257,7 +251,6 @@ studentRouter.patch(
         return res.status(404).json({ message: "Complaint not found." });
       }
 
-      // Check if complaint belongs to the logged-in student
       if (complaint.studentId.toString() !== req.user._id.toString()) {
         return res
           .status(403)
@@ -266,7 +259,6 @@ studentRouter.patch(
           });
       }
 
-      // Status checks
       if (complaint.status === "pending") {
         return res
           .status(400)
@@ -282,7 +274,6 @@ studentRouter.patch(
           .json({ message: "Complaint is already resolved." });
       }
 
-      // Update the status
       complaint.status = "resolved";
       await complaint.save();
 
@@ -363,6 +354,83 @@ studentRouter.get(
     } catch (err) {
       console.error("Student monthly complaint error:", err);
       res.status(500).json({ message: "Server Error" });
+    }
+  }
+);
+
+// GET API - Get all public pending complaints for discover page
+studentRouter.get(
+  "/student/complaints/public",
+  userAuth,
+  isStudent,
+  async (req, res) => {
+    try {
+      const complaints = await Complaint.find({ 
+        visibility: "public", 
+        status: "pending" 
+      })
+        .populate("studentId", "rollNumber name")
+        .populate("upvotes", "rollNumber")
+        .sort({ upvoteCount: -1, createdAt: -1 }); 
+
+      res.status(200).json({
+        message: "Public complaints fetched successfully.",
+        data: complaints,
+      });
+    } catch (err) {
+      res.status(500).json({ message: "Server error: " + err.message });
+    }
+  }
+);
+
+// PATCH API - Toggle upvote for a complaint
+studentRouter.patch(
+  "/student/complaint/upvote/:id",
+  userAuth,
+  isStudent,
+  async (req, res) => {
+    try {
+      const complaintId = req.params.id;
+      const studentId = req.user._id;
+
+      if (!complaintId) {
+        return res.status(400).json({ message: "Complaint ID is required." });
+      }
+
+      const complaint = await Complaint.findById(complaintId);
+      if (!complaint) {
+        return res.status(404).json({ message: "Complaint not found." });
+      }
+
+      if (complaint.visibility !== "public") {
+        return res.status(403).json({ 
+          message: "You can only upvote public complaints." 
+        });
+      }
+
+      const hasUpvoted = complaint.upvotes.includes(studentId);
+      
+      if (hasUpvoted) {
+        complaint.upvotes = complaint.upvotes.filter(
+          id => id.toString() !== studentId.toString()
+        );
+        await complaint.save();
+        
+        res.status(200).json({
+          message: "Upvote removed successfully.",
+          data: { upvoted: false, upvoteCount: complaint.upvoteCount }
+        });
+      } else {
+        complaint.upvotes.push(studentId);
+        await complaint.save();
+        
+        res.status(200).json({
+          message: "Upvoted successfully.",
+          data: { upvoted: true, upvoteCount: complaint.upvoteCount }
+        });
+      }
+    } catch (err) {
+      res.status(500).json({ message: "Server error: " + err.message });
     }
   }
 );

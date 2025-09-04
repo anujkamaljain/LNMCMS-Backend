@@ -287,7 +287,7 @@ superAdminRouter.get(
       const skip = (page - 1) * limit;
 
       const students = await Student.find()
-        .sort({ rollNumber: 1 }) // optional: sort alphabetically
+        .sort({ rollNumber: 1 }) 
         .skip(skip)
         .limit(limit);
 
