@@ -83,6 +83,12 @@ const complaintSchema = new mongoose.Schema(
       type: Number,
       default: 0,
       min: 0
+    },
+    rating: {
+      type: Number,
+      min: 1,
+      max: 5,
+      default: null
     }
   },
   { timestamps: true }

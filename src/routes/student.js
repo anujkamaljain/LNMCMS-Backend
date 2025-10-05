@@ -237,9 +237,14 @@ studentRouter.patch(
   async (req, res) => {
     try {
       const _id = req.params.id;
+      const { rating } = req.body;
 
       if (!_id) {
         return res.status(400).json({ message: "Complaint ID is required." });
+      }
+
+      if (!rating || rating < 1 || rating > 5) {
+        return res.status(400).json({ message: "Rating is required and must be between 1 and 5." });
       }
 
       const complaint = await Complaint.findOne({ _id }).populate(
@@ -275,6 +280,7 @@ studentRouter.patch(
       }
 
       complaint.status = "resolved";
+      complaint.rating = rating;
       await complaint.save();
 
       const populatedComplaint = await Complaint.findById(_id)
