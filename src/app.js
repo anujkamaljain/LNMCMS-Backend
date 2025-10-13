@@ -9,6 +9,7 @@ const authRouter = require("./routes/auth");
 const superAdminRouter = require("./routes/superAdmin");
 const adminRouter = require("./routes/admin");
 const studentRouter = require("./routes/student");
+const mediaRouter = require("./routes/media");
 const cors = require("cors");
 
 app.use(
@@ -26,6 +27,7 @@ app.use("/", authRouter);
 app.use("/", superAdminRouter);
 app.use("/", adminRouter);
 app.use("/", studentRouter);
+app.use("/", mediaRouter);
 
 app.get("/", (req, res) => {
   res.status(200).send("LNMCMS Backend is alive 🚀");

@@ -12,22 +12,62 @@ adminRouter.get(
   userAuth,
   isAdmin,
   async (req, res) => {
-    let department = req.user.department;
-    department = department.toUpperCase();
-    const complaints = await Complaint.find({
-      tags: department,
-      status: "pending",
-    }).populate("studentId", "rollNumber");
-    if (complaints.length == 0) {
-      return res.status(200).json({
-        message:
-          "No pending complaints currently. Check your accepted complaints panel.",
+    try {
+      let department = req.user.department;
+      department = department.toUpperCase();
+      
+      // Pagination parameters
+      let { page = 1, limit = 10 } = req.query;
+      page = parseInt(page);
+      limit = parseInt(limit);
+      
+      const skip = (page - 1) * limit;
+      
+      // Get total count for pagination
+      const totalComplaints = await Complaint.countDocuments({
+        tags: department,
+        status: "pending",
       });
+      
+      const complaints = await Complaint.find({
+        tags: department,
+        status: "pending",
+      })
+        .populate("studentId", "rollNumber")
+        .select("+media")
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 }); // Sort by newest first
+      
+      const totalPages = Math.ceil(totalComplaints / limit);
+      
+      if (complaints.length == 0) {
+        return res.status(200).json({
+          message:
+            "No pending complaints currently. Check your accepted complaints panel.",
+          data: [],
+          pagination: {
+            currentPage: page,
+            totalPages,
+            totalComplaints,
+            limit
+          }
+        });
+      }
+      
+      res.status(200).json({
+        message: "Currently pending complaints fetched.",
+        data: complaints,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalComplaints,
+          limit
+        }
+      });
+    } catch (err) {
+      res.status(500).json({ message: "Server error: " + err.message });
     }
-    res.status(200).json({
-      message: "Currently pending complaints fetched.",
-      data: complaints,
-    });
   }
 );
 
@@ -37,24 +77,63 @@ adminRouter.get(
   userAuth,
   isAdmin,
   async (req, res) => {
-    let department = req.user.department;
-    department = department.toUpperCase();
-    const complaints = await Complaint.find({
-      tags: department,
-      status: "accepted",
-    })
-      .populate("acceptedBy", "name email")
-      .populate("studentId", "rollNumber");
-    if (complaints.length == 0) {
-      return res.status(200).json({
-        message:
-          "No complaints accepted currently. Check your pending complaints panel.",
+    try {
+      let department = req.user.department;
+      department = department.toUpperCase();
+      
+      // Pagination parameters
+      let { page = 1, limit = 10 } = req.query;
+      page = parseInt(page);
+      limit = parseInt(limit);
+      
+      const skip = (page - 1) * limit;
+      
+      // Get total count for pagination
+      const totalComplaints = await Complaint.countDocuments({
+        tags: department,
+        status: "accepted",
       });
+      
+      const complaints = await Complaint.find({
+        tags: department,
+        status: "accepted",
+      })
+        .populate("acceptedBy", "name email")
+        .populate("studentId", "rollNumber")
+        .select("+media")
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 }); // Sort by newest first
+      
+      const totalPages = Math.ceil(totalComplaints / limit);
+      
+      if (complaints.length == 0) {
+        return res.status(200).json({
+          message:
+            "No complaints accepted currently. Check your pending complaints panel.",
+          data: [],
+          pagination: {
+            currentPage: page,
+            totalPages,
+            totalComplaints,
+            limit
+          }
+        });
+      }
+      
+      res.status(200).json({
+        message: "Currently accepted complaints fetched.",
+        data: complaints,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalComplaints,
+          limit
+        }
+      });
+    } catch (err) {
+      res.status(500).json({ message: "Server error: " + err.message });
     }
-    res.status(200).json({
-      message: "Currently accepted complaints fetched.",
-      data: complaints,
-    });
   }
 );
 
@@ -64,23 +143,62 @@ adminRouter.get(
   userAuth,
   isAdmin,
   async (req, res) => {
-    let department = req.user.department;
-    department = department.toUpperCase();
-    const complaints = await Complaint.find({
-      tags: department,
-      status: "resolved",
-    })
-      .populate("acceptedBy", "name email")
-      .populate("studentId", "rollNumber");
-    if (complaints.length == 0) {
-      return res.status(200).json({
-        message: "No record found!",
+    try {
+      let department = req.user.department;
+      department = department.toUpperCase();
+      
+      // Pagination parameters
+      let { page = 1, limit = 10 } = req.query;
+      page = parseInt(page);
+      limit = parseInt(limit);
+      
+      const skip = (page - 1) * limit;
+      
+      // Get total count for pagination
+      const totalComplaints = await Complaint.countDocuments({
+        tags: department,
+        status: "resolved",
       });
+      
+      const complaints = await Complaint.find({
+        tags: department,
+        status: "resolved",
+      })
+        .populate("acceptedBy", "name email")
+        .populate("studentId", "rollNumber")
+        .select("+media")
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 }); // Sort by newest first
+      
+      const totalPages = Math.ceil(totalComplaints / limit);
+      
+      if (complaints.length == 0) {
+        return res.status(200).json({
+          message: "No record found!",
+          data: [],
+          pagination: {
+            currentPage: page,
+            totalPages,
+            totalComplaints,
+            limit
+          }
+        });
+      }
+      
+      res.status(200).json({
+        message: "History of resolved complaints fetched.",
+        data: complaints,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalComplaints,
+          limit
+        }
+      });
+    } catch (err) {
+      res.status(500).json({ message: "Server error: " + err.message });
     }
-    res.status(200).json({
-      message: "History of resolved complaints fetched.",
-      data: complaints,
-    });
   }
 );
 
@@ -126,7 +244,8 @@ adminRouter.patch(
     await complaint.save();
     const populatedComplaint = await Complaint.findById(_id)
       .populate("acceptedBy", "name email")
-      .populate("studentId", "rollNumber");
+      .populate("studentId", "rollNumber")
+      .select("+media");
     res.status(200).json({
       message: "Complaint accepted successfully.",
       data: populatedComplaint,
