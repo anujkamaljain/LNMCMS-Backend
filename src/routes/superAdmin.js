@@ -45,16 +45,11 @@ superAdminRouter.post(
         message: "Super Admin created successfully",
         data: newSuperAdmin,
       });
-      try {
-        await sendMail({
-          to: email,
-          subject: "Welcome to Complaint Portal",
-          text: `Your Super Admin account is created.\n\n Your Login credentials are as follows: \n\nEmail: ${email}\nPassword: ${password}. \n\nPlease change your password after logging in.`,
-        });
-      } catch (emailError) {
-        console.error('Failed to send email to Super Admin:', email, emailError.message);
-        // Don't fail the user creation if email fails
-      }
+      await sendMail({
+        to: email,
+        subject: "Welcome to Complaint Portal",
+        text: `Your Super Admin account is created.\n\n Your Login credentials are as follows: \n\nEmail: ${email}\nPassword: ${password}. \n\nPlease change your password after logging in.`,
+      });
     } catch (err) {
       res.status(500).json({ message: err.message });
     }
@@ -92,16 +87,11 @@ superAdminRouter.post(
         message: "Admin created successfully",
         data: newAdmin,
       });
-      try {
-        await sendMail({
-          to: email,
-          subject: "Welcome to Complaint Portal",
-          text: `Your admin account is created.\n\n Your Login credentials are as follows: \n\nEmail: ${email}\nPassword: ${password}. \n\nPlease change your password after logging in.`,
-        });
-      } catch (emailError) {
-        console.error('Failed to send email to Admin:', email, emailError.message);
-        // Don't fail the user creation if email fails
-      }
+      await sendMail({
+        to: email,
+        subject: "Welcome to Complaint Portal",
+        text: `Your admin account is created.\n\n Your Login credentials are as follows: \n\nEmail: ${email}\nPassword: ${password}. \n\nPlease change your password after logging in.`,
+      });
     } catch (err) {
       res.status(500).json({ message: err.message });
     }
@@ -139,16 +129,11 @@ superAdminRouter.post(
         message: "Student created successfully",
         data: newStudent,
       });
-      try {
-        await sendMail({
-          to: email,
-          subject: "Welcome to Complaint Portal",
-          text: `Your student account is created.\n\n Your Login credentials are as follows: \n\nEmail: ${email}\nPassword: ${password}. \n\nPlease change your password after logging in.`,
-        });
-      } catch (emailError) {
-        console.error('Failed to send email to Student:', email, emailError.message);
-        // Don't fail the user creation if email fails
-      }
+      await sendMail({
+        to: email,
+        subject: "Welcome to Complaint Portal",
+        text: `Your student account is created.\n\n Your Login credentials are as follows: \n\nEmail: ${email}\nPassword: ${password}. \n\nPlease change your password after logging in.`,
+      });
     } catch (err) {
       res.status(500).json({ message: err.message });
     }
@@ -466,15 +451,11 @@ superAdminRouter.patch(
         message: "admin details updated successfully",
         data: admin,
       });
-      try {
-        await sendMail({
-          to: admin.email,
-          subject: "Updated details of Complaint Portal",
-          text: `Your admin account details were updated by a Super Admin.\n\n Your Updated details are as follows : \n\n Email: ${admin.email}\n Department: ${admin.department}\n\n Your password is unchanged so you can use your old password to login.`,
-        });
-      } catch (emailError) {
-        console.error('Failed to send update email to Admin:', admin.email, emailError.message);
-      }
+      await sendMail({
+        to: admin.email,
+        subject: "Updated details of Complaint Portal",
+        text: `Your admin account details were updated by a Super Admin.\n\n Your Updated details are as follows : \n\n Email: ${admin.email}\n Department: ${admin.department}\n\n Your password is unchanged so you can use your old password to login.`,
+      });
     } catch (err) {
       res.status(500).json({ message: err.message });
     }
@@ -502,15 +483,11 @@ superAdminRouter.patch(
         message: "student details updated successfully",
         data: student,
       });
-      try {
-        await sendMail({
-          to: student.email,
-          subject: "Updated details of Complaint Portal",
-          text: `Your student account details were updated by a Super Admin.\n\n Your Updated details are as follows : \n\n Email: ${student.email}\n RollNumber: ${student.rollNumber}\n\n Your password is unchanged so you can use your old password to login.`,
-        });
-      } catch (emailError) {
-        console.error('Failed to send update email to Student:', student.email, emailError.message);
-      }
+      await sendMail({
+        to: student.email,
+        subject: "Updated details of Complaint Portal",
+        text: `Your student account details were updated by a Super Admin.\n\n Your Updated details are as follows : \n\n Email: ${student.email}\n RollNumber: ${student.rollNumber}\n\n Your password is unchanged so you can use your old password to login.`,
+      });
     } catch (err) {
       res.status(500).json({ message: err.message });
     }
