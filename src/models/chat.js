@@ -26,6 +26,8 @@ const chatSchema = new mongoose.Schema({
   },
   admin: { type: mongoose.Schema.Types.ObjectId, ref: "Admin", index: true },
   messages: [messageSchema],
+  lastReadByStudent: { type: Date, default: Date.now },
+  lastReadByAdmin: { type: Date, default: Date.now },
 });
 
 const Chat = mongoose.model("Chat", chatSchema);

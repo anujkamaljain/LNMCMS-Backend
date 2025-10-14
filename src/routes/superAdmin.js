@@ -13,6 +13,7 @@ const generatePassword = require("../utils/generatePassword");
 const sendMail = require("../utils/sendMail");
 const { validatePassword, ValidateEditData } = require("../helpers/validation");
 const Complaint = require("../models/complaints");
+const { Chat } = require("../models/chat");
 
 //1. POST API for creating a single super admin
 superAdminRouter.post(
@@ -227,6 +228,11 @@ superAdminRouter.delete(
 
       const deletedComplaints = await Complaint.deleteMany({
         studentId: user._id,
+      });
+
+      // Delete chats related to this student
+      const deletedChats = await Chat.deleteMany({
+        student: user._id,
       });
 
       const deletedStudent = await Student.deleteOne({ rollNumber });
@@ -808,6 +814,9 @@ superAdminRouter.delete(
 
                 try {
                   await Complaint.deleteMany({ studentId: student._id });
+
+                  // Delete chats related to this student
+                  await Chat.deleteMany({ student: student._id });
 
                   const deleteResult = await Student.deleteOne({
                     _id: student._id,
