@@ -26,11 +26,15 @@ ADMIN
 
 STUDENT 
 - /student/complaints/:id (GET)
-- /student/complaints (POST)
+- /student/complaints (POST) - Now supports media uploads
 - /student/complaints/:id/resolve (PATCH)
 - /student/complaints/public (GET)
 - /student/complaint/upvote/:id (PATCH) 
 - /student/forgotpassword (PATCH)
+
+MEDIA
+- /media/upload (POST) - Upload media files for complaints
+- /media/delete/:publicId (DELETE) - Delete media file
 
 AUTH
 - /auth/login (POST)

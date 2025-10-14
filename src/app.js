@@ -9,6 +9,7 @@ const authRouter = require("./routes/auth");
 const superAdminRouter = require("./routes/superAdmin");
 const adminRouter = require("./routes/admin");
 const studentRouter = require("./routes/student");
+const mediaRouter = require("./routes/media");
 const cors = require("cors");
 const http = require("http");
 const initializeSocket = require("./utils/socket");
@@ -29,6 +30,7 @@ app.use("/", authRouter);
 app.use("/", superAdminRouter);
 app.use("/", adminRouter);
 app.use("/", studentRouter);
+app.use("/", mediaRouter);
 app.use("/", chatRouter);
 
 app.get("/", (req, res) => {

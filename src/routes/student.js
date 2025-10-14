@@ -6,12 +6,16 @@ const Complaint = require("../models/complaints");
 const isStudent = require("../middlewares/isStudent");
 const { validatePassword } = require("../helpers/validation");
 const bcrypt = require("bcrypt");
+const { uploadMultiple, handleUploadError, addFormattedFiles } = require("../middlewares/fileUpload");
 
-// POST /student/complaint — Register a complaint
+// POST /student/complaint — Register a complaint with optional media
 studentRouter.post(
   "/student/complaint",
   userAuth,
   isStudent,
+  uploadMultiple('media', 3),
+  addFormattedFiles,
+  handleUploadError,
   async (req, res) => {
     try {
       const {
@@ -48,7 +52,8 @@ studentRouter.post(
         availableTimeFrom,
         availableTimeTo,
         contactNumber,
-        visibility
+        visibility,
+        media: req.formattedFiles || req.body.media || [] // Include uploaded media files or media from request body
       });
 
       await newComplaint.save();
@@ -72,19 +77,51 @@ studentRouter.get(
     try {
       const studentId = req.user._id;
 
+      // Pagination parameters
+      let { page = 1, limit = 10 } = req.query;
+      page = parseInt(page);
+      limit = parseInt(limit);
+      
+      const skip = (page - 1) * limit;
+      
+      // Get total count for pagination
+      const totalComplaints = await Complaint.countDocuments({ 
+        studentId, 
+        status: "pending" 
+      });
+
       const complaints = await Complaint.find({ studentId, status: "pending" })
         .populate("acceptedBy", "name email")
-        .populate("studentId", "rollNumber");
+        .populate("studentId", "rollNumber")
+        .select("+media")
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 }); // Sort by newest first
+
+      const totalPages = Math.ceil(totalComplaints / limit);
 
       if (complaints.length === 0) {
         return res.status(200).json({
           message: "You have no pending complaints.",
+          data: [],
+          pagination: {
+            currentPage: page,
+            totalPages,
+            totalComplaints,
+            limit
+          }
         });
       }
 
       res.status(200).json({
         message: "Your pending complaints have been fetched successfully.",
         data: complaints,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalComplaints,
+          limit
+        }
       });
     } catch (err) {
       res.status(500).json({ message: "Server error: " + err.message });
@@ -101,19 +138,51 @@ studentRouter.get(
     try {
       const studentId = req.user._id;
 
+      // Pagination parameters
+      let { page = 1, limit = 10 } = req.query;
+      page = parseInt(page);
+      limit = parseInt(limit);
+      
+      const skip = (page - 1) * limit;
+      
+      // Get total count for pagination
+      const totalComplaints = await Complaint.countDocuments({ 
+        studentId, 
+        status: "accepted" 
+      });
+
       const complaints = await Complaint.find({ studentId, status: "accepted" })
         .populate("acceptedBy", "name email")
-        .populate("studentId", "rollNumber");
+        .populate("studentId", "rollNumber")
+        .select("+media")
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 }); // Sort by newest first
+
+      const totalPages = Math.ceil(totalComplaints / limit);
 
       if (complaints.length === 0) {
         return res.status(200).json({
           message: "You have no accepted complaints.",
+          data: [],
+          pagination: {
+            currentPage: page,
+            totalPages,
+            totalComplaints,
+            limit
+          }
         });
       }
 
       res.status(200).json({
         message: "Your accepted complaints have been fetched successfully.",
         data: complaints,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalComplaints,
+          limit
+        }
       });
     } catch (err) {
       res.status(500).json({ message: "Server error: " + err.message });
@@ -130,55 +199,57 @@ studentRouter.get(
     try {
       const studentId = req.user._id;
 
+      // Pagination parameters
+      let { page = 1, limit = 10 } = req.query;
+      page = parseInt(page);
+      limit = parseInt(limit);
+      
+      const skip = (page - 1) * limit;
+      
+      // Get total count for pagination
+      const totalComplaints = await Complaint.countDocuments({ 
+        studentId, 
+        status: "resolved" 
+      });
+
       const complaints = await Complaint.find({ studentId, status: "resolved" })
         .populate("acceptedBy", "name email")
-        .populate("studentId", "rollNumber");
+        .populate("studentId", "rollNumber")
+        .select("+media")
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 }); // Sort by newest first
+
+      const totalPages = Math.ceil(totalComplaints / limit);
 
       if (complaints.length === 0) {
         return res.status(200).json({
           message: "You have no resolved complaints.",
+          data: [],
+          pagination: {
+            currentPage: page,
+            totalPages,
+            totalComplaints,
+            limit
+          }
         });
       }
 
       res.status(200).json({
         message: "Your resolved complaints have been fetched successfully.",
         data: complaints,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalComplaints,
+          limit
+        }
       });
     } catch (err) {
       res.status(500).json({ message: "Server error: " + err.message });
     }
   }
 );
-
-// GET /student/complaints — Fetch all complaints of the logged-in student
-
-// studentRouter.get(
-//   "/student/complaints",
-//   userAuth,
-//   isStudent,
-//   async (req, res) => {
-//     try {
-//       const studentId = req.user._id;
-
-//       const complaints = await Complaint.find({ studentId })
-//         .populate("acceptedBy", "name email")
-//         .populate("studentId", "rollNumber");
-
-//       if (complaints.length === 0) {
-//         return res.status(200).json({
-//           message: "You have not registered any complaints yet.",
-//         });
-//       }
-
-//       res.status(200).json({
-//         message: "Your complaints have been fetched successfully.",
-//         data: complaints,
-//       });
-//     } catch (err) {
-//       res.status(500).json({ message: "Server error: " + err.message });
-//     }
-//   }
-// );
 
 // PATCH /student/changepassword — Update student password
 studentRouter.patch(

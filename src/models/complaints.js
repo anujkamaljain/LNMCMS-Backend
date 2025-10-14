@@ -89,7 +89,34 @@ const complaintSchema = new mongoose.Schema(
       min: 1,
       max: 5,
       default: null
-    }
+    },
+    media: [{
+      type: {
+        type: String,
+        enum: ['image', 'video'],
+        required: true
+      },
+      url: {
+        type: String,
+        required: true
+      },
+      publicId: {
+        type: String,
+        required: true
+      },
+      filename: {
+        type: String,
+        required: true
+      },
+      size: {
+        type: Number,
+        required: true
+      },
+      uploadedAt: {
+        type: Date,
+        default: Date.now
+      }
+    }]
   },
   { timestamps: true }
 );
