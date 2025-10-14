@@ -25,6 +25,11 @@ const chatSchema = new mongoose.Schema({
     index: true,
   },
   admin: { type: mongoose.Schema.Types.ObjectId, ref: "Admin", index: true },
+  complaintId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Complaint",
+    index: true,
+  },
   messages: [messageSchema],
   lastReadByStudent: { type: Date, default: Date.now },
   lastReadByAdmin: { type: Date, default: Date.now },

@@ -31,17 +31,19 @@ const initializeSocket = (server) => {
 
     socket.on(
       "sendMessage",
-      async ({ name, userId, userRole, targetUserId, text }) => {
+      async ({ name, userId, userRole, targetUserId, text, complaintId }) => {
         try {
           const roomId = getSecretRoomId({ userId, targetUserId });
           let chat = await Chat.findOne({
             student: { $in: [userId, targetUserId] },
             admin: { $in: [userId, targetUserId] },
+            ...(complaintId && { complaintId }),
           });
           if (!chat) {
             chat = new Chat({
               student: userRole === "student" ? userId : targetUserId,
               admin: userRole === "admin" ? userId : targetUserId,
+              ...(complaintId && { complaintId }),
               messages: [],
             });
           }

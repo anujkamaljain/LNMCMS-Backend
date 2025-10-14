@@ -3,6 +3,7 @@ const studentRouter = express.Router();
 const userAuth = require("../middlewares/userAuth");
 const Student = require("../models/students");
 const Complaint = require("../models/complaints");
+const { Chat } = require("../models/chat");
 const isStudent = require("../middlewares/isStudent");
 const { validatePassword } = require("../helpers/validation");
 const bcrypt = require("bcrypt");
@@ -353,6 +354,9 @@ studentRouter.patch(
       complaint.status = "resolved";
       complaint.rating = rating;
       await complaint.save();
+
+      // Delete chat related to this complaint
+      await Chat.deleteMany({ complaintId: _id });
 
       const populatedComplaint = await Complaint.findById(_id)
         .populate("acceptedBy", "name email")

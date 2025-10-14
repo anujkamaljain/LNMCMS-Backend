@@ -6,6 +6,7 @@ const chatRouter = express.Router();
 
 chatRouter.get("/chat/:targetUserId", userAuth, async (req, res) => {
   const { targetUserId } = req.params;
+  const { complaintId } = req.query;
   const userId = req?.user?._id;
   try {
     if (!userId || !targetUserId) {
@@ -16,6 +17,7 @@ chatRouter.get("/chat/:targetUserId", userAuth, async (req, res) => {
     let chat = await Chat.findOne({
       student: { $in: [userId, targetUserId] },
       admin: { $in: [userId, targetUserId] },
+      ...(complaintId && { complaintId }),
     }).populate({
         path: "messages.studentId messages.adminId",
         select: "name email rollNumber department",
@@ -24,6 +26,7 @@ chatRouter.get("/chat/:targetUserId", userAuth, async (req, res) => {
         chat = new Chat({
         student: req?.user?.role === "student" ? userId : targetUserId,
         admin: req?.user?.role === "admin" ? userId : targetUserId,
+        ...(complaintId && { complaintId }),
         messages: [],
         lastReadByStudent: new Date(),
         lastReadByAdmin: new Date(),
@@ -39,6 +42,7 @@ chatRouter.get("/chat/:targetUserId", userAuth, async (req, res) => {
 // Check for unread messages
 chatRouter.get("/chat/:targetUserId/unread", userAuth, async (req, res) => {
   const { targetUserId } = req.params;
+  const { complaintId } = req.query;
   const userId = req?.user?._id;
   const userRole = req?.user?.role;
   
@@ -52,6 +56,7 @@ chatRouter.get("/chat/:targetUserId/unread", userAuth, async (req, res) => {
     const chat = await Chat.findOne({
       student: { $in: [userId, targetUserId] },
       admin: { $in: [userId, targetUserId] },
+      ...(complaintId && { complaintId }),
     });
     
     if (!chat) {
@@ -78,6 +83,7 @@ chatRouter.get("/chat/:targetUserId/unread", userAuth, async (req, res) => {
 // Mark messages as read
 chatRouter.post("/chat/:targetUserId/read", userAuth, async (req, res) => {
   const { targetUserId } = req.params;
+  const { complaintId } = req.body;
   const userId = req?.user?._id;
   const userRole = req?.user?.role;
   
@@ -91,6 +97,7 @@ chatRouter.post("/chat/:targetUserId/read", userAuth, async (req, res) => {
     const chat = await Chat.findOne({
       student: { $in: [userId, targetUserId] },
       admin: { $in: [userId, targetUserId] },
+      ...(complaintId && { complaintId }),
     });
     
     if (chat) {
