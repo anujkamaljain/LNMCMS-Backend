@@ -10,6 +10,9 @@ const superAdminRouter = require("./routes/superAdmin");
 const adminRouter = require("./routes/admin");
 const studentRouter = require("./routes/student");
 const cors = require("cors");
+const http = require("http");
+const initializeSocket = require("./utils/socket");
+const { chatRouter } = require("./routes/chat");
 
 app.use(
   cors({
@@ -26,16 +29,20 @@ app.use("/", authRouter);
 app.use("/", superAdminRouter);
 app.use("/", adminRouter);
 app.use("/", studentRouter);
+app.use("/", chatRouter);
 
 app.get("/", (req, res) => {
   res.status(200).send("LNMCMS Backend is alive 🚀");
 });
 
+const server = http.createServer(app);
+
+initializeSocket(server);
 
 connectDB()
   .then(() => {
     console.log("Database connected successfully.");
-    app.listen(process.env.PORT, () => {
+    server.listen(process.env.PORT, () => {
       console.log(`Server is running on port ${process.env.PORT}`);
     });
   })
