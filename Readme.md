@@ -23,7 +23,6 @@
 - [🛠️ Tech Stack](#️-tech-stack)
 - [🚀 Quick Start](#-quick-start)
 - [📚 API Documentation](#-api-documentation)
-- [🔐 Authentication](#-authentication)
 - [🏗️ Project Structure](#️-project-structure)
 - [🔒 Security](#-security)
 - [🤝 Contributing](#-contributing)
