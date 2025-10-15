@@ -446,17 +446,53 @@ studentRouter.get(
   isStudent,
   async (req, res) => {
     try {
+      // Pagination parameters
+      let { page = 1, limit = 12 } = req.query;
+      page = parseInt(page);
+      limit = parseInt(limit);
+      
+      const skip = (page - 1) * limit;
+      
+      // Get total count for pagination
+      const totalComplaints = await Complaint.countDocuments({ 
+        visibility: "public", 
+        status: "pending" 
+      });
+
       const complaints = await Complaint.find({ 
         visibility: "public", 
         status: "pending" 
       })
         .populate("studentId", "rollNumber name")
         .populate("upvotes", "rollNumber")
-        .sort({ upvoteCount: -1, createdAt: -1 }); 
+        .sort({ upvoteCount: -1, createdAt: -1 })
+        .skip(skip)
+        .limit(limit);
+
+      const totalPages = Math.ceil(totalComplaints / limit);
+
+      if (complaints.length === 0) {
+        return res.status(200).json({
+          message: "No public complaints found.",
+          data: [],
+          pagination: {
+            currentPage: page,
+            totalPages,
+            totalComplaints,
+            limit
+          }
+        });
+      }
 
       res.status(200).json({
         message: "Public complaints fetched successfully.",
         data: complaints,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalComplaints,
+          limit
+        }
       });
     } catch (err) {
       res.status(500).json({ message: "Server error: " + err.message });
