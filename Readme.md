@@ -369,7 +369,6 @@ We welcome contributions! Here's how you can help:
 
 ### **Anuj Jain**
 [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/anujkamaljain)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)]([https://www.linkedin.com/in/anujkamaljain-/])
 
 ### **Anmol Sanger**
 [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/AnmolSanger)
@@ -380,7 +379,7 @@ We welcome contributions! Here's how you can help:
 
 ## 📄 License
 
-This project is licensed under the **ISC License** - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **ISC License**.
 
 ---
 
