@@ -261,152 +261,21 @@ Production: https://lnmcms-backend.onrender.com
 
 ---
 
-## 🔐 Authentication
-
-### **JWT Token Structure**
-```json
-{
-  "userId": "64a1b2c3d4e5f6789abcdef0",
-  "role": "student|admin|superAdmin",
-  "email": "user@lnmiit.ac.in",
-  "iat": 1640995200,
-  "exp": 1641024000
-}
-```
-
-### **Cookie Configuration**
-```javascript
-{
-  httpOnly: true,
-  sameSite: "None",
-  secure: true,
-  maxAge: 1000 * 60 * 60 * 8, // 8 hours
-  path: "/"
-}
-```
 
 ### **Role-based Access Control**
 - **Student**: Can submit complaints, view own complaints, chat with admins
-- **Admin**: Can manage department complaints, accept/resolve complaints
+- **Admin**: Can manage department complaints, accept complaints
 - **SuperAdmin**: Full system access, user management, analytics
 
----
-
-## 💬 Real-time Features
-
-### **Socket.IO Events**
-
-#### **Client → Server Events**
-```javascript
-// Join user-specific room
-socket.emit('join', { userId, role });
-
-// Send message
-socket.emit('sendMessage', {
-  targetUserId,
-  text,
-  complaintId // optional
-});
-
-// Mark messages as read
-socket.emit('markAsRead', { targetUserId, complaintId });
 ```
 
-#### **Server → Client Events**
-```javascript
-// New message received
-socket.on('newMessage', (message) => {
-  // Handle new message
-});
 
-// Message read receipt
-socket.on('messageRead', (data) => {
-  // Handle read receipt
-});
-
-// Unread count update
-socket.on('unreadCountUpdate', (count) => {
-  // Update unread count
-});
 ```
 
-### **Room Management**
-- **User Rooms**: Each user has a personal room for notifications
-- **Chat Rooms**: Dynamic rooms for user-to-user conversations
-- **Complaint Rooms**: Context-specific rooms for complaint discussions
-
----
-
-## 📁 File Upload System
-
-### **Supported File Types**
-- **Images**: JPG, JPEG, PNG, GIF, WebP
-- **Documents**: PDF, DOC, DOCX, TXT
-- **Videos**: MP4, AVI, MOV (up to 100MB)
-
-### **Upload Process**
-1. **Client Upload**: Files sent to `/media/upload` endpoint
-2. **Validation**: File type, size, and security validation
-3. **Cloudinary Upload**: Files uploaded to cloud storage
-4. **Database Storage**: File metadata stored in MongoDB
-5. **URL Generation**: Public URLs generated for frontend access
-
-### **File Management**
-```javascript
-// Upload multiple files
-const formData = new FormData();
-files.forEach(file => formData.append('media', file));
-
-// Response format
-{
-  "message": "Files uploaded successfully",
-  "data": {
-    "files": [
-      {
-        "publicId": "lnmcms/abc123",
-        "url": "https://res.cloudinary.com/...",
-        "format": "jpg",
-        "size": 1024000
-      }
-    ],
-    "count": 3
-  }
-}
-```
-
----
-
-## 📧 Email Integration
-
-### **Email Templates**
-- **Welcome Email**: New student registration
-- **Complaint Status**: Status change notifications
-- **Password Reset**: Password reset instructions
-- **System Notifications**: Important system updates
-
-### **Bulk Email Features**
-- **CSV Processing**: Automatic email sending for bulk student registration
-- **Template Variables**: Dynamic content insertion
-- **Delivery Tracking**: Email delivery status monitoring
-- **Error Handling**: Failed delivery retry mechanism
-
-### **Email Configuration**
-```javascript
-// Nodemailer configuration
-const transporter = nodemailer.createTransporter({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS // Gmail App Password
-  }
-});
-```
-
----
 
 ## 🏗️ Project Structure
-
 ```
+
 LNMCMS-Backend/
 ├── 📁 src/
 │   ├── 📁 config/             # Configuration files
@@ -444,91 +313,32 @@ LNMCMS-Backend/
 └── 📄 API_LIST.md            # API endpoint documentation
 ```
 
----
-
-## 🧪 Testing
-
-### **API Testing with Postman**
-1. Import the Postman collection
-2. Set environment variables
-3. Run the authentication flow
-4. Test all endpoints with proper authentication
-
-### **Load Testing**
-```bash
-# Install artillery for load testing
-npm install -g artillery
-
-# Run load test
-artillery run load-test.yml
-```
-
-### **Database Testing**
-```bash
-# Connect to MongoDB
-mongosh "mongodb://localhost:27017/lnmcms"
-
-# Run test queries
-db.complaints.find().limit(5)
-db.students.countDocuments()
-```
-
----
-
-## 📦 Deployment
-
-### **🌐 Render Deployment**
-```bash
-# Connect GitHub repository to Render
-# Set environment variables in Render dashboard
-# Deploy automatically on git push
-```
-
-### **🐳 Docker Deployment**
-```dockerfile
-# Build Docker image
-docker build -t lnmcms-backend .
-
-# Run container
-docker run -p 7777:7777 --env-file .env lnmcms-backend
-```
-
-### **☁️ Environment Variables**
-```env
-# Production environment variables
-NODE_ENV=production
-DB_URL=mongodb+srv://username:password@cluster.mongodb.net/lnmcms
-PORT=7777
-JWT_SECRET=production-secret-key
-EMAIL_USER=production-email@gmail.com
-EMAIL_PASS=production-app-password
-CLOUDINARY_CLOUD_NAME=production-cloud-name
-CLOUDINARY_API_KEY=production-api-key
-CLOUDINARY_API_SECRET=production-api-secret
-```
-
----
 
 ## 🔒 Security
 
+
 ### **Authentication Security**
+```
 - **JWT Tokens**: Secure token-based authentication
 - **HTTP-Only Cookies**: Prevent XSS attacks
 - **Password Hashing**: Bcrypt with salt rounds
 - **Token Expiration**: 8-hour token lifetime
 - **Secure Headers**: CORS and security headers
+```
 
 ### **Data Validation**
+```
 - **Input Sanitization**: All inputs validated and sanitized
 - **File Upload Security**: File type and size validation
-- **SQL Injection Prevention**: Mongoose ODM protection
 - **XSS Protection**: Input encoding and validation
+```
 
 ### **API Security**
-- **Rate Limiting**: Request rate limiting (implement as needed)
+```
 - **CORS Configuration**: Restricted origin access
 - **Environment Variables**: Sensitive data in environment variables
 - **Error Handling**: Secure error messages without sensitive data
+```
 
 ---
 
@@ -557,12 +367,6 @@ We welcome contributions! Here's how you can help:
 6. Push to the branch (`git push origin feature/amazing-feature`)
 7. Open a Pull Request
 
-### **📚 Documentation**
-- Improve API documentation
-- Add code examples
-- Fix typos and grammar
-- Add deployment guides
-
 ---
 
 ## 👥 Authors
@@ -571,11 +375,10 @@ We welcome contributions! Here's how you can help:
 
 ### **Anuj Jain**
 [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/anujkamaljain)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/anujkamaljain)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)]([https://linkedin.com/in/anujkamaljain](https://www.linkedin.com/in/anujkamaljain-/))
 
 ### **Anmol Sanger**
 [![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/AnmolSanger)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://linkedin.com/in/anmolsanger)
 
 </div>
 
@@ -593,6 +396,6 @@ This project is licensed under the **ISC License** - see the [LICENSE](LICENSE) 
 
 **Built with ❤️ for the LNMIIT community**
 
-[🚀 Live API](https://lnmcms-backend.onrender.com) • [📱 Frontend](https://lnmcms-frontend.vercel.app) • [🐛 Report Issue](https://github.com/anujkamaljain/LNMCMS-Backend/issues)
+[📱 Live](https://lnmcms-frontend.vercel.app) • [🐛 Report Issue](https://github.com/anujkamaljain/LNMCMS-Backend/issues)
 
 </div>
