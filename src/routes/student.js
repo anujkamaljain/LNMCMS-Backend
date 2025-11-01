@@ -8,6 +8,7 @@ const isStudent = require("../middlewares/isStudent");
 const { validatePassword } = require("../helpers/validation");
 const bcrypt = require("bcrypt");
 const { uploadMultiple, handleUploadError, addFormattedFiles } = require("../middlewares/fileUpload");
+const { deleteFromCloudinary } = require("../config/cloudinary");
 
 // POST /student/complaint — Register a complaint with optional media
 studentRouter.post(
@@ -368,6 +369,82 @@ studentRouter.patch(
       });
     } catch (err) {
       res.status(500).json({ message: "Complaint ID is Incorrrect" });
+    }
+  }
+);
+
+// DELETE /student/complaint/:id - Delete a pending complaint
+studentRouter.delete(
+  "/student/complaint/:id",
+  userAuth,
+  isStudent,
+  async (req, res) => {
+    try {
+      const _id = req.params.id;
+
+      if (!_id) {
+        return res.status(400).json({ message: "Complaint ID is required." });
+      }
+
+      const complaint = await Complaint.findById(_id);
+
+      if (!complaint) {
+        return res.status(404).json({ message: "Complaint not found." });
+      }
+
+      // Check if complaint belongs to the student
+      if (complaint.studentId.toString() !== req.user._id.toString()) {
+        return res.status(403).json({
+          message: "You are not authorized to delete this complaint.",
+        });
+      }
+
+      // Only allow deletion of pending complaints
+      if (complaint.status !== "pending") {
+        return res.status(400).json({
+          message: "Only pending complaints can be deleted.",
+        });
+      }
+
+      // Delete associated media files from Cloudinary
+      if (complaint.media && complaint.media.length > 0) {
+        try {
+          for (const mediaFile of complaint.media) {
+            if (mediaFile.publicId) {
+              // publicId is stored without folder prefix in database
+              // Add folder prefix for deletion in Cloudinary
+              const fullPublicId = `lnmcms-complaints/${mediaFile.publicId}`;
+              try {
+                await deleteFromCloudinary(fullPublicId);
+              } catch (deleteError) {
+                // Continue deleting other files even if one fails
+                console.error(`Error deleting media file ${mediaFile.publicId}:`, deleteError);
+              }
+            }
+          }
+        } catch (mediaError) {
+          // Log error but continue with complaint deletion
+          console.error("Error deleting media files:", mediaError);
+          // Continue with complaint deletion even if media deletion fails
+        }
+      }
+
+      // Delete associated chat messages
+      try {
+        await Chat.deleteMany({ complaintId: _id });
+      } catch (chatError) {
+        // Log error but continue with complaint deletion
+        console.error("Error deleting chat messages:", chatError);
+      }
+
+      // Delete the complaint
+      await Complaint.findByIdAndDelete(_id);
+
+      res.status(200).json({
+        message: "Complaint deleted successfully.",
+      });
+    } catch (err) {
+      res.status(500).json({ message: "Server error: " + err.message });
     }
   }
 );
