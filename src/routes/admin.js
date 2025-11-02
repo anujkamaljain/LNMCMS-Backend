@@ -253,6 +253,87 @@ adminRouter.patch(
   }
 );
 
+// API for rejecting a complaint
+adminRouter.patch(
+  "/admin/complaint/reject/:id",
+  userAuth,
+  isAdmin,
+  async (req, res) => {
+    try {
+      const _id = req.params.id;
+      const { rejectionReason } = req.body;
+
+      if (!_id) {
+        return res.status(400).json({
+          message: "Complaint ID is required.",
+        });
+      }
+
+      if (!rejectionReason || typeof rejectionReason !== "string") {
+        return res.status(400).json({
+          message: "Rejection reason is required.",
+        });
+      }
+
+      if (rejectionReason.trim().length < 10 || rejectionReason.trim().length > 200) {
+        return res.status(400).json({
+          message: "Rejection reason must be between 10 and 200 characters.",
+        });
+      }
+
+      const complaint = await Complaint.findOne({ _id: _id });
+
+      if (!complaint) {
+        return res.status(404).json({
+          message: "Complaint not found.",
+        });
+      }
+
+      if (!complaint.tags.includes(req.user.department.toUpperCase())) {
+        return res.status(403).json({
+          message:
+            "You cannot reject this complaint as it does not belong to your department.",
+        });
+      }
+
+      if (complaint.status === "accepted") {
+        return res.status(400).json({
+          message: "Cannot reject a complaint that has already been accepted.",
+        });
+      }
+
+      if (complaint.status === "resolved") {
+        return res.status(400).json({
+          message: "Cannot reject a complaint that has already been resolved.",
+        });
+      }
+
+      if (complaint.status === "rejected") {
+        return res.status(400).json({
+          message: "Complaint is already rejected.",
+        });
+      }
+
+      complaint.status = "rejected";
+      complaint.rejectedBy = req.user._id;
+      complaint.rejectionReason = rejectionReason.trim();
+      await complaint.save();
+
+      const populatedComplaint = await Complaint.findById(_id)
+        .populate("rejectedBy", "name email")
+        .populate("studentId", "rollNumber")
+        .select("+media");
+
+      res.status(200).json({
+        message: "Complaint rejected successfully.",
+        data: populatedComplaint,
+      });
+    } catch (err) {
+      res.status(500).json({ message: "Server error: " + err.message });
+    }
+  }
+);
+
 // PATCH API to update admin password
 adminRouter.patch(
   "/admin/changepassword",

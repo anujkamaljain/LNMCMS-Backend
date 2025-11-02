@@ -253,6 +253,67 @@ studentRouter.get(
   }
 );
 
+// GET /student/complaints/rejected
+studentRouter.get(
+  "/student/complaints/rejected",
+  userAuth,
+  isStudent,
+  async (req, res) => {
+    try {
+      const studentId = req.user._id;
+
+      // Pagination parameters
+      let { page = 1, limit = 10 } = req.query;
+      page = parseInt(page);
+      limit = parseInt(limit);
+      
+      const skip = (page - 1) * limit;
+      
+      // Get total count for pagination
+      const totalComplaints = await Complaint.countDocuments({ 
+        studentId, 
+        status: "rejected" 
+      });
+
+      const complaints = await Complaint.find({ studentId, status: "rejected" })
+        .populate("rejectedBy", "name email")
+        .populate("studentId", "rollNumber")
+        .select("+media")
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 }); // Sort by newest first
+
+      const totalPages = Math.ceil(totalComplaints / limit);
+
+      if (complaints.length === 0) {
+        return res.status(200).json({
+          message: "You have no rejected complaints.",
+          data: [],
+          pagination: {
+            currentPage: page,
+            totalPages,
+            totalComplaints,
+            limit
+          }
+        });
+      }
+
+      res.status(200).json({
+        message: "Your rejected complaints have been fetched successfully.",
+        data: complaints,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalComplaints,
+          limit
+        }
+      });
+    } catch (err) {
+      res.status(500).json({ message: "Server error: " + err.message });
+    }
+  }
+);
+
 // PATCH /student/changepassword — Update student password
 studentRouter.patch(
   "/student/changepassword",
@@ -399,10 +460,10 @@ studentRouter.delete(
         });
       }
 
-      // Only allow deletion of pending complaints
-      if (complaint.status !== "pending") {
+      // Only allow deletion of pending or rejected complaints
+      if (complaint.status !== "pending" && complaint.status !== "rejected") {
         return res.status(400).json({
-          message: "Only pending complaints can be deleted.",
+          message: "Only pending or rejected complaints can be deleted.",
         });
       }
 

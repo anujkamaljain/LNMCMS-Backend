@@ -30,13 +30,25 @@ const complaintSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "accepted", "resolved"],
+      enum: ["pending", "accepted", "resolved", "rejected"],
       default: "pending",
       required: true
     },
     acceptedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Admin",
+      default: null,
+    },
+    rejectedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Admin",
+      default: null,
+    },
+    rejectionReason: {
+      type: String,
+      trim: true,
+      minLength: 10,
+      maxLength: 200,
       default: null,
     },
     location: {
