@@ -510,7 +510,7 @@ studentRouter.delete(
   }
 );
 
-// GET API - Monthly complaints for current year for logged-in student
+// GET API - Monthly complaints for last 12 months for logged-in student
 studentRouter.get(
   "/student/complaints/monthly",
   userAuth,
@@ -519,26 +519,41 @@ studentRouter.get(
     try {
       const studentId = req.user._id;
 
-      // Get start and end of current year
+      // Calculate last 12 months dynamically
       const now = new Date();
-      const startOfYear = new Date(now.getFullYear(), 0, 1); // Jan 1
-      const endOfYear = new Date(now.getFullYear(), 11, 31, 23, 59, 59); // Dec 31
+      const currentMonth = now.getMonth(); // 0-11 (Jan = 0, Dec = 11)
+      const currentYear = now.getFullYear();
+
+      // Calculate start date (12 months ago)
+      let startMonth = currentMonth - 11;
+      let startYear = currentYear;
+      if (startMonth < 0) {
+        startMonth += 12;
+        startYear -= 1;
+      }
+
+      const startDate = new Date(startYear, startMonth, 1, 0, 0, 0, 0);
+      // Get last day of current month (using day 0 of next month)
+      const endDate = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59, 999);
 
       const results = await Complaint.aggregate([
         {
           $match: {
             studentId: studentId,
-            createdAt: { $gte: startOfYear, $lte: endOfYear },
+            createdAt: { $gte: startDate, $lte: endDate },
           },
         },
         {
           $group: {
-            _id: { month: { $month: "$createdAt" } },
+            _id: {
+              year: { $year: "$createdAt" },
+              month: { $month: "$createdAt" },
+            },
             count: { $sum: 1 },
           },
         },
         {
-          $sort: { "_id.month": 1 },
+          $sort: { "_id.year": 1, "_id.month": 1 },
         },
       ]);
 
@@ -557,16 +572,41 @@ studentRouter.get(
         "Dec",
       ];
 
-      // Initialize with 0 for all months
-      const response = {};
-      for (let i = 0; i < 12; i++) {
-        response[monthMap[i]] = 0;
+      // Generate last 12 months labels in order with year tracking
+      const monthLabels = [];
+      const monthYearMap = new Map(); // Map to track year+month combinations
+      
+      for (let i = 11; i >= 0; i--) {
+        let monthIndex = currentMonth - i;
+        let year = currentYear;
+        if (monthIndex < 0) {
+          monthIndex += 12;
+          year -= 1;
+        }
+        const monthName = monthMap[monthIndex];
+        // Format year as 2-digit (e.g., 24, 25)
+        const yearShort = year.toString().slice(-2);
+        const monthLabel = `${monthName} ${yearShort}`;
+        monthLabels.push(monthLabel);
+        // Store year-month key for proper mapping
+        monthYearMap.set(`${year}-${monthIndex}`, monthLabel);
       }
 
-      // Fill in data from aggregation
+      // Initialize response with zeros for all months
+      const response = {};
+      monthLabels.forEach((month) => {
+        response[month] = 0;
+      });
+
+      // Fill in data from aggregation, matching by year and month
       results.forEach(({ _id, count }) => {
-        const monthName = monthMap[_id.month - 1];
-        response[monthName] = count;
+        const year = _id.year;
+        const monthNum = _id.month - 1; // Convert to 0-based index
+        const key = `${year}-${monthNum}`;
+        if (monthYearMap.has(key)) {
+          const monthLabel = monthYearMap.get(key);
+          response[monthLabel] = count;
+        }
       });
 
       res.json(response);
