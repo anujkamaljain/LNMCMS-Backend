@@ -1,7 +1,7 @@
 <div align="center">
 
 # 🛠️ LNMCMS Backend
-### **LNM Complaint Management System - Backend**
+### **LNM Complaint Management System - Backend API**
 
 [![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
 [![Express.js](https://img.shields.io/badge/Express.js-5.1.0-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com/)
