@@ -11,7 +11,7 @@
 
 **A robust, scalable, and feature-rich RESTful API for educational institution complaint management**
 
-[🚀 Live API](https://lnmcms-backend.onrender.com) • [📱 Frontend Repository](https://github.com/anujkamaljain/LNMCMS-Frontend) • [🐛 Report Bug](https://github.com/anujkamaljain/LNMCMS-Backend/issues) • [✨ Request Feature](https://github.com/anujkamaljain/LNMCMS-Backend/issues)
+[🚀 Live API](https://lnmcms-backend-390970881686.asia-south1.run.app/) • [📱 Frontend Repository](https://github.com/anujkamaljain/LNMCMS-Frontend) • [🐛 Report Bug](https://github.com/anujkamaljain/LNMCMS-Backend/issues) • [✨ Request Feature](https://github.com/anujkamaljain/LNMCMS-Backend/issues)
 
 </div>
 
